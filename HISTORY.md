@@ -1,6 +1,188 @@
 ## NEXT
 
--
+## 0.19.0, 2016-Feb-22
+
+- Re authorize streams on reconnect
+- Don't automatically parse URLs in incoming webhooks message body if an attachment is also present
+- Add alerts for highlight words
+- Add button to show offline users in a room
+- Add Import framework
+- Add importing of the files from slack
+- Add notifications for highlight words
+- Add pagination to user's list
+- Add per room email preferences
+- Add preferences for highlight words
+- Admin is now active when created on setup
+- Allow imports with a ton of messages in the same day (thousands)
+- Allow to set Name and Username for initial admin user via environment variables - Closes #2231
+- Closes #2096; LDAP broken when using meteor deploy
+- Closes #2218; LDAP: Add a setting to disable avatar sync
+- Closes #2221; LDAP Custom Domain Search gives "TypeError"
+- Closes #2262; Implement LDAP user sync
+- Do not notify edited messages again
+- Don't try to parse an upload if it doesn't contain a file.
+- Fix "topic changed" messages with incorrect timestamp
+- Fix and improve webrtc settings
+- Fix blocked settings
+- Fix broken items after the latest merge
+- Fix broken ldap when custom filter specifies no userId
+- Fix room's topic not get applied
+- Fix starttls issue by setting tls.connect hostname parameter.
+- Fix the sendMessage with nothing after it being left in
+- Fix upload previews
+- Really respect the limit of the mongo database.
+- Reduce the size of the max records we input to half of what it was, to reduce the stress on mongo
+- Remove unused files: splash
+- Replaces "disabled" by "readonly" and Closes #2241
+- Send emails respecting room preferences
+- Settings to change placeholders in login form - closes #2204
+- Split CA cert into array of strings.
+- Switched CAS configuration from Meteor.settings to RocketChat.settings.
+
+## 0.18.0, 2016-Feb-15
+
+- Add .jshintrc to project
+- Add button to test desktop notifications
+- Add email notification preference
+- Added HIGH priority to mentions message callback
+- Added working CAS 1.0 login module based on meteor-account-cas and meteor-account-saml
+- Allow deleting of files whose corresponding message is not currently loaded in the client
+- Allow settings descriptions to use markdown
+- Allow text selection in settings area
+- Change from LDAP_Restricted_User_Groups to LDAP_Domain_Search_Filter
+- Email all offline users
+- Fixed: if mobile app was open and in background, it would still read ... ...messages in the active room.
+- Fixed: user received mobile notification even when browser was open.
+- Improve delete message by file
+- Push Notifications settings
+- Replace current LDAP with new LDAP system
+- Send emails to offline users when direct messaged
+- Send emails to offline users when mentioned in a channel
+- SendMessage cleanup - moving notifications stuff to callbacks
+- Server settings added for custom STUN and TURN servers
+- Settings: Disable action buttons when form has changes
+- Terminal output should be displayed in LTR always
+- Using REST to send pushes through gateway
+
+## 0.17.0, 2016-Feb-09
+
+- Closes #1367; Add ability to delete files
+- Parse URLs by default on messages from REST APIs/webhooks/integrations - #1362
+- Messages from REST APIs are not from bot by default
+- Show that server is running on logs
+- Add permission 'view-c-room' to bots
+- Fixed checking username availability
+- Show startup message
+- Created a global Logger called "SystemLogger"
+- Allow pass title for logs of type box as seconde parameter
+- Hablity to view server longs on the administration interface
+- Use the RocketChat.Info.version on headers
+- Parse URLs on messages from REST
+- Do not process all messages from REST as bot
+- Fixed name not being required for registration with settings requiring it.
+- Remove the LDAP string form login form as it is irrelevant to end users.
+- Changed settings.get to automatically setup and call a specifed callback
+- Remove the need for server restart after changing registration domain whitelist
+- Fixed trying to read build from RocketChat.Info when it is not available.
+- Add an example of how to send logs from server to client
+- Fix problem removing file via side bar
+- Require 'view-c-room' permission for accessing channels
+- Add new logger types; Implement LoggerManager as an EventEmmiter; Filter logs by level; Improve log layout
+- Allow send hooks from a specific public channel
+- Add Uploads model at client side too
+- Convert file uploads to model style
+- Show confirmation dialog on leave/hide room
+- Hide "leave/hide room" buttons when showing unread message counter
+- Add i18n to rocketchat-ui-flextab package, with default strings for file deletion dialogue
+- Move delete button style to base.less in theme package
+- Add a button to allow deleting an uploaded file
+- Add logger as dependencies for theme and lib packages
+- Add some options to logger and use it in some places
+
+## 0.16.0, 2016-Feb-01
+
+- Added option for admins to manually add new users
+- Added option for admin to require user to change password
+- Changed admin statistics with admin info
+- Show "Room not Found" correctly
+- Update konecty:multiple-instances-status to 1.0.5
+- Closes #1888; Add mimetye image/vnd.microsoft.icon to mimtype list
+- Disable WebRTC broadcastStatus
+- Closes #2078; ObserveChanges on rocketchat_room Not Using Oplog
+- Add sort for all queries with limit
+- Do not get field `usernames` with room on joinDefaultChannel
+- Improve logs of stream broadcast
+- Create script to build livechat on windows
+
+## 0.15.0, 2016-Jan-25
+
+- Ability to change email on account
+- Temporary fix for AM/PM timestamp breaking cog
+- Fixed typo in oembed widget
+- Change to process.exit(1) to restart server
+- Add "Default Domain" to LDAP config
+- Fix boolean environment variables
+- Include a fallback click event for loading more messages
+- Fix html h3 tag was closed with h4
+- Allow changing e-mail; invalidates verification on e-mail change
+- Enable editing via admin / users
+- Log error when trigger url returns 500
+- Bind starttls correctly for LDAP
+- Custom oAuth supporting json or plain content_types responses of the identity
+- Allow pass room id to direct rooms
+- Outgoing: Get the room from posted message to reply
+- Change Meteor.absoluteUrl to force SSL if Force_SSL is true
+- Escape regexp on checking email availability; change type of input to email
+- Fix check for MAIL_URL when it's server side only
+
+## 0.14.0, 2016-Jan-18
+
+- Added admin setting to Force SSL
+- Added connections status bar to login page
+- Added options to enable TLS on LDAP
+- Added package dependecy because of RoomModerators collection
+- Added Raspberry Pi support announcement
+- Added UI to Add/Remove Room Moderators and Owners
+- Adds aria-label to button with icons only
+- Allow multi-line title on oembed
+- Allow SMTP server with no login
+- Display burger icon on History page
+- Display time based on locale instead of using fixed 24h format
+- Do not close Desktop Notifications to keep them in notification center
+- Escape dollar before message token replacement
+- Fallback LDAP login to local account if LDAP fails
+- Fixed audio-recorder not stoping
+- Fixed confusing text labels on video/audio call buttons
+- Fixed overlapping windows
+- Fixed unset moderator test
+- Fixed Warning: Site URL configuration for Sandstorm.io
+- Fixes a bug with search results, where sometimes cog wasn't displayed.
+- Fixes adding/removing owners and moderators
+- Fixes Domain whitelist not restricting
+- Get the correct language when senging messages via email
+- Implement logging out of other logged-in clients
+- Improved code execution on open room computation
+- Improved processWebhookMessage return
+- Improved room moderator subscription and tests
+- Improved the layout and info of the oauth popup
+- Make oembed parse title in ungreedy form
+- Moved collection definition to a better place
+- Moved logic to create a message from webhooks to a new file
+- Moved response logic outside of processWebhookMessage
+- Parse urls with fragments correctly
+- Prevent browsers from trying to validate the input field
+- Prevent erros update outgoing webhooks with empty channel
+- Prevent multiple listeners on message stream per room
+- Process outgoing webhook response as a new message
+- Remove toUpperCase from emojione popup config
+- Send correct content-type for livechat
+- Set/Unset moderator via streams
+- Sort room files by uploadedAt
+- Update oembedVideoWidget removing static height
+- Update strings with localized strings in en
+- Use 'mim-types' ty check content type and compare to extension
+- Using default values instead of integration data
+- Using processWebhookMessage on V1 APIs
 
 ## 0.13.0, 2016-Jan-11
 

@@ -4,7 +4,7 @@
 			You must login to Sandstorm (on the top right) in order to access this chat.
 		</div>
 	{{else}}
-	<form id="login-card" method='/'>
+	<form id="login-card" method='/' novalidate>
 		{{#if waitActivation}}
 			<header>
 				<h2>{{{_ "Registration_Succeeded"}}}</h2>
@@ -24,13 +24,13 @@
 						<input type="text" name='name' placeholder='{{namePlaceholder}}' dir="auto" />
 					</div>
 					<div class='input-text active {{showEmailOrUsername}}'>
-						<input type="text" name='emailOrUsername' placeholder='{{_ "Email_or_username"}}' autocapitalize="off" autocorrect="off" />
+						<input type="text" name='emailOrUsername' placeholder='{{emailOrUsernamePlaceholder}}' autocapitalize="off" autocorrect="off" />
 					</div>
 					<div class='input-text active {{showEmail}}'>
 						<input type="email" name='email' placeholder='{{_ "Email"}}' />
 					</div>
 					<div class='input-text active {{showPassword}}'>
-						<input type="password" name='pass' placeholder='{{_ "Password"}}' />
+						<input type="password" name='pass' placeholder='{{passwordPlaceholder}}' />
 					</div>
 					<div class='input-text active {{showConfirmPassword}}'>
 						<input type="password" name='confirm-pass' placeholder='{{_ "Confirm_password"}}' />
@@ -61,6 +61,10 @@
 	</form>
 	<div class='login-terms'>
 		{{{loginTerms}}}
+
+		<div class="powered-by">
+			Powered by <a href="https://rocket.chat">Open Source Chat Platform Rocket.Chat</a>.
+		</div>
 	</div>
 	{{/if}}
 </template>

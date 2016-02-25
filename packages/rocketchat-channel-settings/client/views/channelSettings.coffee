@@ -4,23 +4,29 @@ Template.channelSettings.helpers
 	editing: (field) ->
 		return Template.instance().editing.get() is field
 	notDirect: ->
-		return ChatRoom.findOne(@rid)?.t isnt 'd'
+		return ChatRoom.findOne(@rid, { fields: { t: 1 }})?.t isnt 'd'
 	roomType: ->
-		return ChatRoom.findOne(@rid)?.t
+		return ChatRoom.findOne(@rid, { fields: { t: 1 }})?.t
 	channelSettings: ->
 		return RocketChat.ChannelSettings.getOptions()
 	roomTypeDescription: ->
-		roomType = ChatRoom.findOne(@rid)?.t
+		roomType = ChatRoom.findOne(@rid, { fields: { t: 1 }})?.t
 		if roomType is 'c'
 			return t('Channel')
 		else if roomType is 'p'
 			return t('Private_Group')
 	roomName: ->
-		return ChatRoom.findOne(@rid)?.name
+		return ChatRoom.findOne(@rid, { fields: { name: 1 }})?.name
 	roomTopic: ->
-		return ChatRoom.findOne(@rid)?.topic
-	archived: ->
-		return ChatRoom.findOne(@rid)?.archived
+		return ChatRoom.findOne(@rid, { fields: { topic: 1 }})?.topic
+	archivationState: ->
+		return ChatRoom.findOne(@rid, { fields: { archived: 1 }})?.archived
+	archivationStateDescription: ->
+		archivationState = ChatRoom.findOne(@rid, { fields: { archived: 1 }})?.archived
+		if archivationState is true
+			return t('Room_archivation_state_true')
+		else
+			return t('Room_archivation_state_false')
 
 Template.channelSettings.events
 	'keydown input[type=text]': (e, t) ->
@@ -40,20 +46,6 @@ Template.channelSettings.events
 	'click .save': (e, t) ->
 		e.preventDefault()
 		t.saveSetting()
-
-	'click .archive': (e, t) ->
-		e.preventDefault()
-
-		Meteor.call 'archiveRoom', t.data.rid, true, (err, results) ->
-			return toastr.error err.reason if err
-			toastr.success TAPi18n.__ 'Room_archived'
-
-	'click .unarchive': (e, t) ->
-		e.preventDefault()
-
-		Meteor.call 'unarchiveRoom', t.data.rid, true, (err, results) ->
-			return toastr.error err.reason if err
-			toastr.success TAPi18n.__ 'Room_unarchived'
 
 Template.channelSettings.onCreated ->
 	@editing = new ReactiveVar
@@ -106,4 +98,15 @@ Template.channelSettings.onCreated ->
 								return toastr.error TAPi18n.__(err.reason, err.details.roomType)
 							return toastr.error TAPi18n.__(err.reason)
 						toastr.success TAPi18n.__ 'Room_type_changed_successfully'
+			when 'archivationState'
+				if @$('input[name=archivationState]:checked').val() is 'true'
+					if ChatRoom.findOne(@data.rid)?.archived isnt true
+						Meteor.call 'archiveRoom', @data?.rid, (err, results) ->
+							return toastr.error err.reason if err
+							toastr.success TAPi18n.__ 'Room_archived'
+				else
+					if ChatRoom.findOne(@data.rid)?.archived is true
+						Meteor.call 'unarchiveRoom', @data?.rid, (err, results) ->
+							return toastr.error err.reason if err
+							toastr.success TAPi18n.__ 'Room_unarchived'
 		@editing.set()

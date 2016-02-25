@@ -9,7 +9,7 @@
 
 		<div class="content">
 			{{#unless hasPermission 'view-privileged-setting'}}
-				<p>You are not authorized to view this page.</p>
+				<p>{{_ "You_are_not_authorized_to_view_this_page"}}</p>
 			{{else}}
 				{{#with group}}
 					{{#if description}}
@@ -42,7 +42,7 @@
 									{{/if}}
 								{{/if}}
 								{{#each settings}}
-									<div class="input-line double-col {{#if changed}}setting-changed{{/if}}">
+									<div class="input-line double-col {{#if changed}}setting-changed{{/if}}" {{isDisabled}}>
 										<label>{{label}}</label>
 										<div>
 											{{#if $eq type 'string'}}
@@ -51,6 +51,10 @@
 												{{else}}
 													<input class="input-monitor" type="text" name="{{_id}}" value="{{value}}" placeholder="{{placeholder}}" {{isDisabled}}/>
 												{{/if}}
+											{{/if}}
+
+											{{#if $eq type 'password'}}
+												<input class="input-monitor" type="password" name="{{_id}}" value="{{value}}" placeholder="{{placeholder}}" {{isDisabled}}/>
 											{{/if}}
 
 											{{#if $eq type 'int'}}
@@ -83,7 +87,11 @@
 											{{/if}}
 
 											{{#if $eq type 'action'}}
-												<button type="button" class="button primary action" data-setting="{{_id}}" data-action="{{value}}" {{isDisabled}}>{{_ actionText}}</button>
+												{{#if hasChanges section}}
+													<span style="line-height: 40px; color: #888;">{{_ "Save_to_enable_this_action"}}</span>
+												{{else}}
+													<button type="button" class="button primary action" data-setting="{{_id}}" data-action="{{value}}" {{isDisabled}}>{{_ actionText}}</button>
+												{{/if}}
 											{{/if}}
 
 											{{#if $eq type 'asset'}}
@@ -107,7 +115,7 @@
 											{{/if}}
 
 											{{#if description}}
-												<div class="settings-description">{{{description}}}</div>
+												<div class="settings-description">{{{RocketChatMarkdown description}}}</div>
 											{{/if}}
 											{{#if alert}}
 												<div class="settings-alert"><i class="icon-attention"></i>{{{_ alert}}}</div>

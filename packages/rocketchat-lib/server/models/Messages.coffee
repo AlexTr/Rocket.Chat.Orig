@@ -8,6 +8,7 @@ RocketChat.models.Messages = new class extends RocketChat.models._Base
 		@tryEnsureIndex { 'rid': 1, 't': 1, 'u._id': 1 }
 		@tryEnsureIndex { 'expireAt': 1 }, { expireAfterSeconds: 0 }
 		@tryEnsureIndex { 'msg': 'text' }
+		@tryEnsureIndex { 'file._id': 1 }, { sparse: 1 }
 
 
 	# FIND ONE
@@ -294,6 +295,22 @@ RocketChat.models.Messages = new class extends RocketChat.models._Base
 		message = user.username
 		return @createWithTypeRoomIdMessageAndUser 'user-unmuted', roomId, message, user, extraData
 
+	createNewModeratorWithRoomIdAndUser: (roomId, user, extraData) ->
+		message = user.username
+		return @createWithTypeRoomIdMessageAndUser 'new-moderator', roomId, message, user, extraData
+
+	createModeratorRemovedWithRoomIdAndUser: (roomId, user, extraData) ->
+		message = user.username
+		return @createWithTypeRoomIdMessageAndUser 'moderator-removed', roomId, message, user, extraData
+
+	createNewOwnerWithRoomIdAndUser: (roomId, user, extraData) ->
+		message = user.username
+		return @createWithTypeRoomIdMessageAndUser 'new-owner', roomId, message, user, extraData
+
+	createOwnerRemovedWithRoomIdAndUser: (roomId, user, extraData) ->
+		message = user.username
+		return @createWithTypeRoomIdMessageAndUser 'owner-removed', roomId, message, user, extraData
+
 	# REMOVE
 	removeById: (_id) ->
 		query =
@@ -312,3 +329,6 @@ RocketChat.models.Messages = new class extends RocketChat.models._Base
 			"u._id": userId
 
 		return @remove query
+
+	getMessageByFileId: (fileID) ->
+		return @findOne { 'file._id': fileID }
