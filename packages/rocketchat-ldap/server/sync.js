@@ -1,3 +1,5 @@
+/* globals slug:true, slugify, LDAP, getLdapUsername:true, getLdapUserUniqueID:true, getDataToSyncUserData:true, syncUserData:true, sync:true  */
+
 const logger = new Logger('LDAPSync', {});
 
 slug = function slug(text) {
@@ -73,7 +75,7 @@ getDataToSyncUserData = function getDataToSyncUserData(ldapUser, user) {
 			switch (userField) {
 				case 'email':
 					if (_.isObject(ldapUser.object[ldapField] === 'object')) {
-						_.map(ldapUser.object[ldapField], function (item) {
+						_.map(ldapUser.object[ldapField], function(item) {
 							emailList.push({ address: item, verified: true });
 						});
 					} else {
@@ -156,7 +158,7 @@ sync = function sync() {
 	try {
 		ldap.connectSync();
 
-		users = RocketChat.models.Users.findLDAPUsers();
+		const users = RocketChat.models.Users.findLDAPUsers();
 
 		users.forEach(function(user) {
 			let ldapUser;
@@ -173,7 +175,7 @@ sync = function sync() {
 				logger.info('Can\'t sync user', user.username);
 			}
 		});
-	} catch(error) {
+	} catch (error) {
 		logger.error(error);
 		return error;
 	}
@@ -183,7 +185,7 @@ sync = function sync() {
 };
 
 let interval;
-let timer;
+let timeout;
 
 RocketChat.settings.get('LDAP_Sync_User_Data', function(key, value) {
 	Meteor.clearInterval(interval);

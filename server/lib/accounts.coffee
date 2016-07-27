@@ -4,10 +4,10 @@ Accounts.config accountsConfig
 
 RocketChat.settings.get 'Accounts_AllowedDomainsList', (_id, value) ->
 	domainWhiteList = _.map value.split(','), (domain) -> domain.trim()
-	restrictCreationByEmailDomain = (email) ->
+	restrictCreationByEmailDomain = if domainWhiteList.length == 1 then domainWhiteList[0] else (email) ->
 		ret = false
 		for domain in domainWhiteList
-			if email.match(domain + '$')
+			if email.match('@' + RegExp.escape(domain) + '$')
 				ret = true
 				break;
 
@@ -20,26 +20,39 @@ RocketChat.settings.get 'Accounts_AllowedDomainsList', (_id, value) ->
 Accounts.emailTemplates.siteName = RocketChat.settings.get 'Site_Name';
 Accounts.emailTemplates.from = "#{RocketChat.settings.get 'Site_Name'} <#{RocketChat.settings.get 'From_Email'}>";
 
-verifyEmailText = Accounts.emailTemplates.verifyEmail.text
-Accounts.emailTemplates.verifyEmail.text = (user, url) ->
+verifyEmailHtml = Accounts.emailTemplates.verifyEmail.text
+Accounts.emailTemplates.verifyEmail.html = (user, url) ->
 	url = url.replace Meteor.absoluteUrl(), Meteor.absoluteUrl() + 'login/'
-	verifyEmailText user, url
+	verifyEmailHtml user, url
 
-resetPasswordText = Accounts.emailTemplates.resetPassword.text
-Accounts.emailTemplates.resetPassword.text = (user, url) ->
+resetPasswordHtml = Accounts.emailTemplates.resetPassword.text
+Accounts.emailTemplates.resetPassword.html = (user, url) ->
 	url = url.replace /\/#\//, '/'
-	resetPasswordText user, url
+	resetPasswordHtml user, url
 
-if RocketChat.settings.get 'Accounts_Enrollment_Email'
-	Accounts.emailTemplates.enrollAccount.text = (user, url) ->
-		text = RocketChat.settings.get 'Accounts_Enrollment_Email'
+Accounts.emailTemplates.enrollAccount.subject = (user) ->
+	if RocketChat.settings.get 'Accounts_Enrollment_Customized'
+		subject = RocketChat.settings.get 'Accounts_Enrollment_Email_Subject'
+	else
+		subject = TAPi18n.__('Accounts_Enrollment_Email_Subject_Default', { lng: user?.language || RocketChat.settings.get('language') || 'en' })
 
-		text = text.replace /\[name\]/g, user.name or ''
-		text = text.replace /\[fname\]/g, _.strLeft(user.name, ' ') or  ''
-		text = text.replace /\[lname\]/g, _.strRightBack(user.name, ' ') or  ''
-		text = text.replace /\[email\]/g, user.emails?[0]?.address or ''
+	return RocketChat.placeholders.replace(subject);
 
-		return text
+Accounts.emailTemplates.enrollAccount.html = (user, url) ->
+
+	if RocketChat.settings.get 'Accounts_Enrollment_Customized'
+		html = RocketChat.settings.get 'Accounts_Enrollment_Email'
+	else
+		html = TAPi18n.__('Accounts_Enrollment_Email_Default', { lng: user?.language || RocketChat.settings.get('language') || 'en' })
+
+	header = RocketChat.placeholders.replace(RocketChat.settings.get('Email_Header') || "")
+	footer = RocketChat.placeholders.replace(RocketChat.settings.get('Email_Footer') || "")
+	html = RocketChat.placeholders.replace(html, {
+		name: user.name,
+		email: user.emails?[0]?.address
+	});
+
+	return header + html + footer;
 
 Accounts.onCreateUser (options, user) ->
 	# console.log 'onCreateUser ->',JSON.stringify arguments, null, '  '
@@ -79,15 +92,17 @@ Accounts.insertUserDoc = _.wrap Accounts.insertUserDoc, (insertUserDoc, options,
 
 	delete user.globalRoles
 
+	user.type ?= 'user'
+
 	_id = insertUserDoc.call(Accounts, options, user)
 
 	if roles.length is 0
 		# when inserting first user give them admin privileges otherwise make a regular user
-		firstUser = RocketChat.models.Users.findOne({ _id: { $ne: 'rocket.cat' }}, { sort: { createdAt: 1 }})
-		if firstUser?._id is _id
-			roles.push 'admin'
-		else
+		hasAdmin = RocketChat.models.Users.findOne({ roles: 'admin' }, {fields: {_id: 1}})
+		if hasAdmin?
 			roles.push 'user'
+		else
+			roles.push 'admin'
 
 	RocketChat.authz.addUserRoles(_id, roles)
 
@@ -101,15 +116,16 @@ Accounts.validateLoginAttempt (login) ->
 		return login.allowed
 
 	if !!login.user?.active isnt true
-		throw new Meteor.Error 'inactive-user', TAPi18n.__ 'User_is_not_activated'
+		throw new Meteor.Error 'error-user-is-not-activated', 'User is not activated', { function: 'Accounts.validateLoginAttempt' }
 		return false
 
-	if login.type is 'password' and RocketChat.settings.get('Accounts_EmailVerification') is true
+	# If user is admin, no need to check if email is verified
+	if 'admin' not in login.user?.roles and login.type is 'password' and RocketChat.settings.get('Accounts_EmailVerification') is true
 		validEmail = login.user.emails.filter (email) ->
 			return email.verified is true
 
 		if validEmail.length is 0
-			throw new Meteor.Error 'no-valid-email'
+			throw new Meteor.Error 'error-invalid-email', 'Invalid email __email__'
 			return false
 
 	RocketChat.models.Users.updateLastLoginById login.user._id

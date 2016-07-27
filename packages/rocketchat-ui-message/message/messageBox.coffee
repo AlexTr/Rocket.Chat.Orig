@@ -1,6 +1,13 @@
 isSubscribed = (_id) ->
 	return ChatSubscription.find({ rid: _id }).count() > 0
 
+katexSyntax = ->
+	if RocketChat.katex.katex_enabled()
+		return "$$KaTeX$$"   if RocketChat.katex.dollar_syntax_enabled()
+		return "\\[KaTeX\\]" if RocketChat.katex.parenthesis_syntax_enabled()
+
+	return false
+
 Template.messageBox.helpers
 	roomName: ->
 		roomData = Session.get('roomData' + this._id)
@@ -12,8 +19,14 @@ Template.messageBox.helpers
 			return roomData.name
 	showMarkdown: ->
 		return RocketChat.Markdown
+	showMarkdownCode: ->
+		return RocketChat.MarkdownCode
+	showKatex: ->
+		return RocketChat.katex
+	katexSyntax: ->
+		return katexSyntax()
 	showFormattingTips: ->
-		return RocketChat.settings.get('Message_ShowFormattingTips') and (RocketChat.Markdown or RocketChat.Highlight)
+		return RocketChat.settings.get('Message_ShowFormattingTips') and (RocketChat.Markdown or RocketChat.MarkdownCode or katexSyntax())
 	canJoin: ->
 		return !! ChatRoom.findOne { _id: @_id, t: 'c' }
 	subscribed: ->
@@ -24,10 +37,6 @@ Template.messageBox.helpers
 			getInput: ->
 				return template.find('.input-message')
 		}
-	canRecordAudio: ->
-		wavRegex = /audio\/wav|audio\/\*/i
-		wavEnabled = !RocketChat.settings.get("FileUpload_MediaTypeWhiteList") || RocketChat.settings.get("FileUpload_MediaTypeWhiteList").match(wavRegex)
-		return RocketChat.settings.get('Message_AudioRecorderEnabled') and (navigator.getUserMedia? or navigator.webkitGetUserMedia?) and wavEnabled and RocketChat.settings.get('FileUpload_Enabled')
 	usersTyping: ->
 		users = MsgTyping.get @_id
 		if users.length is 0
@@ -53,6 +62,16 @@ Template.messageBox.helpers
 	fileUploadAllowedMediaTypes: ->
 		return RocketChat.settings.get('FileUpload_MediaTypeWhiteList')
 
+	showMic: ->
+		if not Template.instance().isMessageFieldEmpty.get()
+			return
+
+		if Template.instance().showMicButton.get()
+			return 'show-mic'
+
+	showSend: ->
+		if not Template.instance().isMessageFieldEmpty.get() or not Template.instance().showMicButton.get()
+			return 'show-send'
 
 Template.messageBox.events
 	'click .join': (event) ->
@@ -63,8 +82,19 @@ Template.messageBox.events
 	'focus .input-message': (event) ->
 		KonchatNotification.removeRoomNotification @_id
 
-	'keyup .input-message': (event) ->
-		chatMessages[Session.get('openedRoom')].keyup(@_id, event, Template.instance())
+	'click .send-button': (event, instance) ->
+		input = instance.find('.input-message')
+		chatMessages[@_id].send(@_id, input, =>
+			# fixes https://github.com/RocketChat/Rocket.Chat/issues/3037
+			# at this point, the input is cleared and ready for autogrow
+			input.updateAutogrow()
+			instance.isMessageFieldEmpty.set(chatMessages[@_id].isEmpty())
+		)
+		input.focus()
+
+	'keyup .input-message': (event, instance) ->
+		chatMessages[@_id].keyup(@_id, event, instance)
+		instance.isMessageFieldEmpty.set(chatMessages[@_id].isEmpty())
 
 	'paste .input-message': (e) ->
 		if not e.originalEvent.clipboardData?
@@ -83,23 +113,13 @@ Template.messageBox.events
 			fileUpload files
 
 	'keydown .input-message': (event) ->
-		chatMessages[Session.get('openedRoom')].keydown(@_id, event, Template.instance())
+		chatMessages[@_id].keydown(@_id, event, Template.instance())
 
-	'click .message-form .icon-paper-plane': (event) ->
-		input = $(event.currentTarget).siblings("textarea")
-		chatMessages[Session.get('openedRoom')].send(this._id, input.get(0))
-		event.preventDefault()
-		event.stopPropagation()
-		input.focus()
-		input.get(0).updateAutogrow()
+	"click .editing-commands-cancel > button": (e) ->
+		chatMessages[@_id].clearEditing()
 
-	"click .editing-commands-cancel > a": (e) ->
-		chatMessages[Session.get('openedRoom')].clearEditing()
-
-	"click .editing-commands-save > a": (e) ->
-		chatMessages[Session.get('openedRoom')].send(@_id, chatMessages.input)
-
-
+	"click .editing-commands-save > button": (e) ->
+		chatMessages[@_id].send(@_id, chatMessages[@_id].input)
 
 	'change .message-form input[type=file]': (event, template) ->
 		e = event.originalEvent or event
@@ -125,13 +145,20 @@ Template.messageBox.events
 			fileUpload [{
 				file: blob
 				type: 'audio'
-				name: 'Audio record'
+				name: TAPi18n.__('Audio record') + '.wav'
 			}]
 
 		t.$('.stop-mic').addClass('hidden')
 		t.$('.mic').removeClass('hidden')
 
-Template.messageBox.onRendered ->
-	# unless window.chatMessages[Session.get('openedRoom')]
-	# 	window.chatMessages[Session.get('openedRoom')] = new ChatMessages
-	# this.chatMessages.init(this.firstNode)
+Template.messageBox.onCreated ->
+	@isMessageFieldEmpty = new ReactiveVar true
+	@showMicButton = new ReactiveVar false
+
+	@autorun =>
+		wavRegex = /audio\/wav|audio\/\*/i
+		wavEnabled = !RocketChat.settings.get("FileUpload_MediaTypeWhiteList") || RocketChat.settings.get("FileUpload_MediaTypeWhiteList").match(wavRegex)
+		if RocketChat.settings.get('Message_AudioRecorderEnabled') and (navigator.getUserMedia? or navigator.webkitGetUserMedia?) and wavEnabled and RocketChat.settings.get('FileUpload_Enabled')
+			@showMicButton.set true
+		else
+			@showMicButton.set false

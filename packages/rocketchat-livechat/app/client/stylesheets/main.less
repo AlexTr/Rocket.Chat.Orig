@@ -34,7 +34,7 @@ textarea {
 	font-size: inherit;
 	line-height: inherit;
 	padding: 5px;
-	margin: 5px;
+	margin: 5px 0;
 	border: 1px solid #E7E7E7;
 	border-radius: 5px;
 	outline: none;
@@ -103,6 +103,10 @@ input:focus {
 		display: block;
 		width: 100%;
 	}
+}
+
+.field-error {
+	border: 1px solid red;
 }
 
 .livechat-room {
@@ -363,6 +367,7 @@ input:focus {
 
 		.input-wrapper {
 			padding: 6px 6px 0 6px;
+			padding-right: 30px;
 			textarea {
 				display: block;
 				padding: 6px 8px;
@@ -380,13 +385,53 @@ input:focus {
 				position: relative;
 			}
 		}
+		.send-button {
+			float: right;
+			position: relative;
+			right: 7px;
+			top: -20px;
+			color: @secondary-font-color;
+			cursor: pointer;
+			.transition(color .15s ease-out);
+
+			&:hover {
+				color: @primary-font-color;
+			}
+		}
 	}
 	.offline {
 		flex: 1 1 100%;
-		font-weight: bold;
 		background-color: white;
-		padding: 2em 0;
-		text-align: center;
+		padding: 1em 10px;
+
+		.offline-message {
+			padding: 1em 0;
+		}
+
+		.message-sent {
+			text-align: center;
+		}
+
+		form {
+			input, textarea {
+				display: block;
+				width: 100%;
+			}
+
+			.buttons {
+				text-align: center;
+			}
+
+			.error {
+				display: none;
+				background-color: #F7D799;
+				padding: 5px;
+
+				&.show {
+					display: block;
+				}
+			}
+		}
 	}
 }
 
@@ -433,10 +478,10 @@ input:focus {
 		z-index: 9999;
 		background: white;
 		position: fixed;
-		height: 60vh;
-		width: 60vw;
-		top: 20vh;
-		left: 20vw;
+		height: 80%;
+		width: 80%;
+		top: 15%;
+		left: 10%;
 		border-radius: 6px;
 		display: flex;
 		flex-direction: column;
@@ -446,6 +491,10 @@ input:focus {
 			padding: 0 15px;
 			border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 			line-height: 40px;
+
+			white-space: nowrap;
+			text-overflow: ellipsis;
+			overflow: hidden;
 		}
 
 		.content {

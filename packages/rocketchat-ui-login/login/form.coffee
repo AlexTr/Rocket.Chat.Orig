@@ -67,6 +67,9 @@ Template.loginForm.helpers
 	passwordPlaceholder: ->
 		return RocketChat.settings.get('Accounts_PasswordPlaceholder') or t("Password")
 
+	hasOnePassword: ->
+		return OnePassword?.findLoginForUrl? && device?.platform?.toLocaleLowerCase() is 'ios'
+
 Template.loginForm.events
 	'submit #login-card': (event, instance) ->
 		event.preventDefault()
@@ -77,15 +80,17 @@ Template.loginForm.events
 		formData = instance.validate()
 		if formData
 			if instance.state.get() is 'email-verification'
-				Meteor.call 'sendConfirmationEmail', formData.email, (err, result) ->
+				Meteor.call 'sendConfirmationEmail', s.trim(formData.email), (err, result) ->
 					RocketChat.Button.reset(button)
+					RocketChat.callbacks.run('userConfirmationEmailRequested');
 					toastr.success t('We_have_sent_registration_email')
 					instance.state.set 'login'
 				return
 
 			if instance.state.get() is 'forgot-password'
-				Meteor.call 'sendForgotPasswordEmail', formData.email, (err, result) ->
+				Meteor.call 'sendForgotPasswordEmail', s.trim(formData.email), (err, result) ->
 					RocketChat.Button.reset(button)
+					RocketChat.callbacks.run('userForgotPasswordEmailRequested');
 					toastr.success t('We_have_sent_password_email')
 					instance.state.set 'login'
 				return
@@ -96,17 +101,19 @@ Template.loginForm.events
 					RocketChat.Button.reset(button)
 
 					if error?
-						if error.error is 'Email already exists.'
+						if error.reason is 'Email already exists.'
 							toastr.error t 'Email_already_exists'
 						else
-							toastr.error error.reason
+							handleError(error)
 						return
 
-					Meteor.loginWithPassword formData.email, formData.pass, (error) ->
-						if error?.error is 'no-valid-email'
+					RocketChat.callbacks.run('userRegistered');
+
+					Meteor.loginWithPassword s.trim(formData.email), formData.pass, (error) ->
+						if error?.error is 'error-invalid-email'
 							toastr.success t('We_have_sent_registration_email')
 							instance.state.set 'login'
-						else if error?.error is 'inactive-user'
+						else if error?.error is 'error-user-is-not-activated'
 							instance.state.set 'wait-activation'
 
 			else
@@ -114,7 +121,7 @@ Template.loginForm.events
 				if RocketChat.settings.get('LDAP_Enable')
 					loginMethod = 'loginWithLDAP'
 
-				Meteor[loginMethod] formData.emailOrUsername, formData.pass, (error) ->
+				Meteor[loginMethod] s.trim(formData.emailOrUsername), formData.pass, (error) ->
 					RocketChat.Button.reset(button)
 					if error?
 						if error.error is 'no-valid-email'
@@ -127,12 +134,29 @@ Template.loginForm.events
 
 	'click .register': ->
 		Template.instance().state.set 'register'
+		RocketChat.callbacks.run('loginPageStateChange', Template.instance().state.get());
 
 	'click .back-to-login': ->
 		Template.instance().state.set 'login'
+		RocketChat.callbacks.run('loginPageStateChange', Template.instance().state.get());
 
 	'click .forgot-password': ->
 		Template.instance().state.set 'forgot-password'
+		RocketChat.callbacks.run('loginPageStateChange', Template.instance().state.get());
+
+	'click .one-passsword': ->
+		if not OnePassword?.findLoginForUrl?
+			return
+
+		succesCallback = (credentials) ->
+			$('input[name=emailOrUsername]').val(credentials.username)
+			$('input[name=pass]').val(credentials.password)
+
+		errorCallback = ->
+			console.log 'OnePassword errorCallback', arguments
+
+		OnePassword.findLoginForUrl(succesCallback, errorCallback, Meteor.absoluteUrl())
+
 
 Template.loginForm.onCreated ->
 	instance = @
@@ -187,6 +211,7 @@ Template.loginForm.onCreated ->
 Template.loginForm.onRendered ->
 	Session.set 'loginDefaultState'
 	Tracker.autorun =>
+		RocketChat.callbacks.run('loginPageStateChange', Template.instance().state.get());
 		switch this.state.get()
 			when 'login', 'forgot-password', 'email-verification'
 				Meteor.defer ->

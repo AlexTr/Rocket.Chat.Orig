@@ -2,13 +2,13 @@
 	<div class="content">
 		{{> videoCall}}
 		{{#if isGroupChat}}
-			<div class="list-view{{#if $.Session.get 'showUserInfo'}} animated-hidden{{/if}}">
+			<div class="list-view animated">
 				{{#with roomUsers}}
-					<div class="status">
+					<div class="title">
 						<h2>{{_ "Members_List"}}</h2>
 						<p>
 							{{{_ "Showing_online_users" total_showing=totalShowing total=total}}}
-							<a class="see-all">{{seeAll}}</a>
+							<button class="see-all">{{seeAll}}</button>
 						</p>
 						{{> videoButtons}}
 						{{#if canAddUser}}
@@ -25,10 +25,10 @@
 					<ul class='list clearfix lines'>
 						{{#each users}}
 							<li class='user-image user-card-room status-{{status}}'>
-								<a data-username="{{username}}" tabindex="0" title="{{username}}">
+								<button data-username="{{username}}" tabindex="0" title="{{username}}">
 									{{> avatar username=username}}
 									<p>{{username}} {{utcOffset}}</p>
-								</a>
+								</button>
 							</li>
 						{{/each}}
 					</ul>
@@ -39,7 +39,7 @@
 			</div>
 		{{/if}}
 		<div class="user-view animated{{#unless showUserInfo}} animated-hidden{{/unless}}">
-			{{> userInfo user=flexUserInfo showAll=isGroupChat video=isDirectChat}}
+			{{> userInfo (userInfoDetail)}}
 		</div>
 	</div>
 </template>

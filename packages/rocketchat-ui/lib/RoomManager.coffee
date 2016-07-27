@@ -4,7 +4,10 @@ loadMissedMessages = (rid) ->
 		return
 
 	Meteor.call 'loadMissedMessages', rid, lastMessage.ts, (err, result) ->
-		ChatMessage.upsert {_id: item._id}, item for item in result
+		for item in result
+			RocketChat.promises.run('onClientMessageReceived', item).then (item) ->
+				item.roles = _.union(UserRoles.findOne(item.u?._id)?.roles, RoomRoles.findOne({rid: item.rid, 'u._id': item.u?._id})?.roles)
+				ChatMessage.upsert {_id: item._id}, item
 
 connectionWasOnline = true
 Tracker.autorun ->
@@ -35,18 +38,20 @@ onDeleteMessageStream = (msg) ->
 	ChatMessage.remove _id: msg._id
 
 
-RocketChat.Notifications.onUser 'message', (msg) ->
-	msg.u =
-		username: 'rocketbot'
-	msg.private = true
+Tracker.autorun ->
+	if Meteor.userId()
+		RocketChat.Notifications.onUser 'message', (msg) ->
+			msg.u =
+				username: 'rocketbot'
+			msg.private = true
 
-	ChatMessage.upsert { _id: msg._id }, msg
+			ChatMessage.upsert { _id: msg._id }, msg
 
 
 @RoomManager = new class
 	openedRooms = {}
 	subscription = null
-	msgStream = new Meteor.Stream 'messages'
+	msgStream = new Meteor.Streamer 'room-messages'
 	onlineUsers = new ReactiveVar {}
 
 	Dep = new Tracker.Dependency
@@ -82,6 +87,11 @@ RocketChat.Notifications.onUser 'message', (msg) ->
 	computation = Tracker.autorun ->
 		for typeName, record of openedRooms when record.active is true
 			do (typeName, record) ->
+
+				user = Meteor.user()
+				unless user?.username
+					return
+
 				record.sub = [
 					Meteor.subscribe 'room', typeName
 				]
@@ -95,15 +105,8 @@ RocketChat.Notifications.onUser 'message', (msg) ->
 					type = typeName.substr(0, 1)
 					name = typeName.substr(1)
 
-					query =
-						t: type
-
-					if type is 'd'
-						query.usernames = $all: [Meteor.user()?.username, name]
-					else
-						query.name = name
-
-					room = ChatRoom.findOne query, { reactive: false }
+					room = Tracker.nonreactive =>
+						return RocketChat.roomTypes.findRoom(type, name, user)
 
 					if not room?
 						record.ready = true
@@ -118,17 +121,20 @@ RocketChat.Notifications.onUser 'message', (msg) ->
 							openedRooms[typeName].streamActive = true
 							msgStream.on openedRooms[typeName].rid, (msg) ->
 
-								# Should not send message to room if room has not loaded all the current messages
-								if RoomHistoryManager.hasMoreNext(openedRooms[typeName].rid) is false
+								RocketChat.promises.run('onClientMessageReceived', msg).then (msg) ->
 
-									# Do not load command messages into channel
-									if msg.t isnt 'command'
-										ChatMessage.upsert { _id: msg._id }, msg
+									# Should not send message to room if room has not loaded all the current messages
+									if RoomHistoryManager.hasMoreNext(openedRooms[typeName].rid) is false
 
-									Meteor.defer ->
-										RoomManager.updateMentionsMarksOfRoom typeName
+										# Do not load command messages into channel
+										if msg.t isnt 'command'
+											msg.roles = _.union(UserRoles.findOne(msg.u?._id)?.roles, RoomRoles.findOne({rid: msg.rid, 'u._id': msg.u?._id})?.roles)
+											ChatMessage.upsert { _id: msg._id }, msg
 
-									RocketChat.callbacks.run 'streamMessage', msg
+										Meteor.defer ->
+											RoomManager.updateMentionsMarksOfRoom typeName
+
+										RocketChat.callbacks.run 'streamMessage', msg
 
 							RocketChat.Notifications.onRoom openedRooms[typeName].rid, 'deleteMessage', onDeleteMessageStream
 
@@ -143,6 +149,11 @@ RocketChat.Notifications.onUser 'message', (msg) ->
 		roomsToClose = _.sortBy(_.values(openedRooms), 'lastSeen').reverse().slice(maxRoomsOpen)
 		for roomToClose in roomsToClose
 			close roomToClose.typeName
+
+
+	closeAllRooms = ->
+		for key, openedRoom of openedRooms
+			close openedRoom.typeName
 
 
 	open = (typeName) ->
@@ -223,11 +234,14 @@ RocketChat.Notifications.onUser 'message', (msg) ->
 		$('.messages-box .mention-link-me').each (index, item) ->
 			topOffset = $(item).offset().top + scrollTop
 			percent = 100 / totalHeight * topOffset
-			ticksBar.append('<div class="tick" style="top: '+percent+'%;"></div>')
-
+			if $(item).hasClass('mention-link-all')
+				ticksBar.append('<div class="tick tick-all" style="top: '+percent+'%;"></div>')
+			else
+				ticksBar.append('<div class="tick" style="top: '+percent+'%;"></div>')
 
 	open: open
 	close: close
+	closeAllRooms: closeAllRooms
 	init: init
 	getDomOfRoom: getDomOfRoom
 	existsDomOfRoom: existsDomOfRoom
@@ -237,3 +251,7 @@ RocketChat.Notifications.onUser 'message', (msg) ->
 	onlineUsers: onlineUsers
 	updateMentionsMarksOfRoom: updateMentionsMarksOfRoom
 	getOpenedRoomByRid: getOpenedRoomByRid
+
+
+RocketChat.callbacks.add 'afterLogoutCleanUp', ->
+	RoomManager.closeAllRooms()

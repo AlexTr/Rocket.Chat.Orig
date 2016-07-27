@@ -5,6 +5,10 @@ Package.describe({
 	git: ''
 });
 
+Npm.depends({
+	'bad-words': '1.3.1'
+});
+
 Package.onUse(function(api) {
 	api.versionsFrom('1.0');
 
@@ -24,9 +28,11 @@ Package.onUse(function(api) {
 	api.use('matb33:collection-hooks');
 	api.use('service-configuration');
 	api.use('check');
-	api.use('arunoda:streams');
+	api.use('rocketchat:streamer');
 	api.use('rocketchat:version');
 	api.use('rocketchat:logger');
+
+	api.use('templating', 'client');
 	api.use('kadira:flow-router', 'client');
 
 	api.addFiles('lib/core.coffee');
@@ -38,16 +44,21 @@ Package.onUse(function(api) {
 	api.addFiles('lib/settings.coffee');
 	api.addFiles('lib/configLogger.coffee');
 	api.addFiles('lib/callbacks.coffee');
+	api.addFiles('lib/fileUploadRestrictions.js');
+	api.addFiles('lib/placeholders.js');
+	api.addFiles('lib/promises.coffee');
 	api.addFiles('lib/slashCommand.coffee');
 	api.addFiles('lib/Message.coffee');
 	api.addFiles('lib/MessageTypes.coffee');
 
 	// SERVER LIB
+	api.addFiles('server/lib/defaultBlockedDomainsList.js', 'server');
+	api.addFiles('server/lib/notifyUsersOnMessage.js', 'server');
 	api.addFiles('server/lib/RateLimiter.coffee', 'server');
 	api.addFiles('server/lib/roomTypes.coffee', 'server');
-	api.addFiles('server/lib/sendNotificationsOnMessage.js', 'server');
-	api.addFiles('server/lib/notifyUsersOnMessage.js', 'server');
 	api.addFiles('server/lib/sendEmailOnMessage.js', 'server');
+	api.addFiles('server/lib/sendNotificationsOnMessage.js', 'server');
+	api.addFiles('server/lib/validateEmailDomain.js', 'server');
 
 	// SERVER MODELS
 	api.addFiles('server/models/_Base.coffee', 'server');
@@ -65,6 +76,7 @@ Package.onUse(function(api) {
 	// SERVER FUNCTIONS
 	api.addFiles('server/functions/checkUsernameAvailability.coffee', 'server');
 	api.addFiles('server/functions/checkEmailAvailability.js', 'server');
+	api.addFiles('server/functions/deleteUser.js', 'server');
 	api.addFiles('server/functions/sendMessage.coffee', 'server');
 	api.addFiles('server/functions/settings.coffee', 'server');
 	api.addFiles('server/functions/setUsername.coffee', 'server');
@@ -74,7 +86,9 @@ Package.onUse(function(api) {
 	// SERVER METHODS
 	api.addFiles('server/methods/addOAuthService.coffee', 'server');
 	api.addFiles('server/methods/checkRegistrationSecretURL.coffee', 'server');
-	api.addFiles('server/methods/clearRequirePasswordChange.js', 'server');
+	api.addFiles('server/methods/deleteUserOwnAccount.js', 'server');
+	api.addFiles('server/methods/getRoomRoles.js', 'server');
+	api.addFiles('server/methods/getUserRoles.js', 'server');
 	api.addFiles('server/methods/joinDefaultChannels.coffee', 'server');
 	api.addFiles('server/methods/removeOAuthService.coffee', 'server');
 	api.addFiles('server/methods/robotMethods.coffee', 'server');
@@ -88,6 +102,7 @@ Package.onUse(function(api) {
 	api.addFiles('server/methods/insertOrUpdateUser.coffee', 'server');
 	api.addFiles('server/methods/setEmail.js', 'server');
 	api.addFiles('server/methods/restartServer.coffee', 'server');
+	api.addFiles('server/methods/filterBadWords.js', ['server']);
 
 	// SERVER STARTUP
 	api.addFiles('server/startup/settingsOnLoadCdnPrefix.coffee', 'server');
@@ -103,6 +118,7 @@ Package.onUse(function(api) {
 	api.addFiles('client/lib/roomExit.coffee', 'client');
 	api.addFiles('client/lib/settings.coffee', 'client');
 	api.addFiles('client/lib/roomTypes.coffee', 'client');
+	api.addFiles('client/lib/userRoles.js', 'client');
 
 	// CLIENT METHODS
 	api.addFiles('client/methods/sendMessage.coffee', 'client');
@@ -120,21 +136,24 @@ Package.onUse(function(api) {
 	// VERSION
 	api.addFiles('rocketchat.info');
 
+	// EXPORT
+	api.export('RocketChat');
+
 	// TAPi18n
-	api.use('templating', 'client');
 	var _ = Npm.require('underscore');
 	var fs = Npm.require('fs');
-	tapi18nFiles = _.compact(_.map(fs.readdirSync('packages/rocketchat-lib/i18n'), function(filename) {
-		if (fs.statSync('packages/rocketchat-lib/i18n/' + filename).size > 16) {
+	var tapi18nFiles = _.compact(_.map(fs.readdirSync('packages/rocketchat-lib/i18n'), function(filename) {
+		if (filename.indexOf('.json') > -1 && fs.statSync('packages/rocketchat-lib/i18n/' + filename).size > 16) {
 			return 'i18n/' + filename;
 		}
 	}));
-	api.use('tap:i18n');
 	api.addFiles(tapi18nFiles);
 
-	// EXPORT
-	api.export('RocketChat');
+	api.use('tap:i18n');
+	api.imply('tap:i18n');
 });
+
+
 
 Package.onTest(function(api) {
 	api.use('coffeescript');

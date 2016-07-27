@@ -57,7 +57,7 @@ Template.membersList.helpers
 	canAddUser: ->
 		roomData = Session.get('roomData' + this._id)
 		return '' unless roomData
-		return roomData.t in ['p', 'c'] and roomData.u?._id is Meteor.userId()
+		return roomData.t in ['p', 'c'] and RocketChat.authz.hasAllPermission('add-user-to-room', this._id)
 
 	autocompleteSettingsAddUser: ->
 		return {
@@ -66,31 +66,36 @@ Template.membersList.helpers
 			rules: [
 				{
 					collection: 'UserAndRoom'
-					subscription: 'roomSearch'
+					subscription: 'userAutocomplete'
 					field: 'username'
-					template: Template.roomSearch
-					noMatchTemplate: Template.roomSearchEmpty
+					template: Template.userSearch
+					noMatchTemplate: Template.userSearchEmpty
 					matchAll: true
-					filter: { type: 'u', uid: { $ne: Meteor.userId() }, active: { $eq: true } }
+					filter:
+						exceptions: [Meteor.user().username]
+					selector: (match) ->
+						return { username: match }
 					sort: 'username'
 				}
 			]
 		}
 
-	flexUserInfo: ->
-		username = Session.get('showUserInfo')
-		return Meteor.users.findOne({ username: String(username) }) or { username: String(username) }
-
 	showUserInfo: ->
 		webrtc = WebRTC.getInstanceByRoomId(this.rid)
 		videoActive = webrtc?.localUrl?.get()? or webrtc?.remoteItems?.get()?.length > 0
-		return Session.get('showUserInfo') and not videoActive
+		return Template.instance().showDetail.get() and not videoActive
+
+	userInfoDetail: ->
+		room = ChatRoom.findOne(this.rid, { fields: { t: 1 } })
+
+		return {
+			username: Template.instance().userDetail.get()
+			clear: Template.instance().clearUserDetail
+			showAll: room?.t in ['c', 'p']
+			video: room?.t in ['d']
+		}
 
 Template.membersList.events
-	"click .flex-tab .user-image > a" : (e) ->
-		RocketChat.TabBar.openFlex()
-		Session.set('showUserInfo', $(e.currentTarget).data('username'))
-
 	'click .see-all': (e, instance) ->
 		seeAll = instance.showAllUsers.get()
 		instance.showAllUsers.set(!seeAll)
@@ -102,24 +107,34 @@ Template.membersList.events
 
 		roomData = Session.get('roomData' + template.data.rid)
 
-		if roomData.t is 'd'
-			Meteor.call 'createGroupRoom', roomData.usernames, doc.username, (error, result) ->
-				if error
-					return Errors.throw error.reason
-
-				if result?.rid?
-					$('#user-add-search').val('')
-		else if roomData.t in ['c', 'p']
+		if roomData.t in ['c', 'p']
 			Meteor.call 'addUserToRoom', { rid: roomData._id, username: doc.username }, (error, result) ->
 				if error
-					return Errors.throw error.reason
+					return handleError(error)
 
 				$('#user-add-search').val('')
 
 	'click .show-more-users': (e, instance) ->
 		instance.usersLimit.set(instance.usersLimit.get() + 100)
 
-
 Template.membersList.onCreated ->
 	@showAllUsers = new ReactiveVar false
 	@usersLimit = new ReactiveVar 100
+	@userDetail = new ReactiveVar
+	@showDetail = new ReactiveVar false
+
+	@clearUserDetail = =>
+		@showDetail.set(false)
+		setTimeout =>
+			@clearRoomUserDetail()
+		, 500
+
+	@showUserDetail = (username) =>
+		@showDetail.set(username?)
+		@userDetail.set(username)
+
+	@clearRoomUserDetail = @data.clearUserDetail
+
+	@autorun =>
+		data = Template.currentData()
+		@showUserDetail data.userDetail

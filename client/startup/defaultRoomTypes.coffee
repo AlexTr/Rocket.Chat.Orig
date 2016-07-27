@@ -9,13 +9,19 @@ RocketChat.roomTypes.add 'c', 10,
 		name: 'channel'
 		path: '/channel/:name'
 		action: (params, queryParams) ->
-			Session.set 'showUserInfo'
 			openRoom 'c', params.name
 			RocketChat.TabBar.showGroup 'channel'
 		link: (sub) ->
 			return { name: sub.name }
+	findRoom: (identifier) ->
+		query =
+			t: 'c'
+			name: identifier
+		return ChatRoom.findOne(query)
+	roomName: (roomData) ->
+		return roomData.name
 	condition: ->
-		return RocketChat.authz.hasAllPermission 'view-c-room'
+		return RocketChat.authz.hasAtLeastOnePermission ['view-c-room', 'view-joined-room']
 
 RocketChat.roomTypes.add 'd', 20,
 	template: 'directMessages'
@@ -24,11 +30,18 @@ RocketChat.roomTypes.add 'd', 20,
 		name: 'direct'
 		path: '/direct/:username'
 		action: (params, queryParams) ->
-			Session.set 'showUserInfo', params.username
 			openRoom 'd', params.username
 			RocketChat.TabBar.showGroup 'directmessage'
 		link: (sub) ->
 			return { username: sub.name }
+	findRoom: (identifier, user) ->
+		query =
+			t: 'd'
+			usernames:
+				$all: [identifier, user.username]
+		return ChatRoom.findOne(query)
+	roomName: (roomData) ->
+		return ChatSubscription.findOne({ rid: roomData._id }, { fields: { name: 1 } })?.name
 	condition: ->
 		return RocketChat.authz.hasAllPermission 'view-d-room'
 
@@ -39,10 +52,16 @@ RocketChat.roomTypes.add 'p', 30,
 		name: 'group'
 		path: '/group/:name'
 		action: (params, queryParams) ->
-			Session.set 'showUserInfo'
 			openRoom 'p', params.name
 			RocketChat.TabBar.showGroup 'privategroup'
 		link: (sub) ->
 			return { name: sub.name }
+	findRoom: (identifier) ->
+		query =
+			t: 'p'
+			name: identifier
+		return ChatRoom.findOne(query)
+	roomName: (roomData) ->
+		return roomData.name
 	condition: ->
 		return RocketChat.authz.hasAllPermission 'view-p-room'

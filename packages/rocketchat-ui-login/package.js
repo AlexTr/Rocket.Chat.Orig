@@ -30,8 +30,8 @@ Package.onUse(function(api) {
 	api.addFiles('login/footer.html', 'client');
 	api.addFiles('login/form.html', 'client');
 	api.addFiles('login/header.html', 'client');
-	api.addFiles('login/intro.html', 'client');
 	api.addFiles('login/layout.html', 'client');
+	api.addFiles('login/layout.js', 'client');
 	api.addFiles('login/services.html', 'client');
 	api.addFiles('login/social.html', 'client');
 

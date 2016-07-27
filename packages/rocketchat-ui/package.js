@@ -57,7 +57,6 @@ Package.onUse(function(api) {
 	api.addFiles('lib/sideNav.coffee', 'client');
 	api.addFiles('lib/tapi18n.coffee', 'client');
 	api.addFiles('lib/textarea-autogrow.js', 'client');
-	api.addFiles('lib/updateModeratorsAndOwners.js', 'client');
 
 	// LIB CORDOVA
 	api.addFiles('lib/cordova/facebook-login.coffee', 'client');
@@ -73,6 +72,9 @@ Package.onUse(function(api) {
 	// LIB CLIPBOARDJS
 	api.addFiles('lib/clipboardjs/clipboard.js', 'client');
 
+	// TEXTAREA CURSOR MANAGEMENT
+	api.addFiles('lib/textarea-cursor/set-cursor-position.js', 'client');
+
 	// TEMPLATE FILES
 	api.addFiles('views/cmsPage.html', 'client');
 	api.addFiles('views/fxos.html', 'client');
@@ -80,18 +82,16 @@ Package.onUse(function(api) {
 	api.addFiles('views/404/roomNotFound.html', 'client');
 	api.addFiles('views/404/invalidSecretURL.html', 'client');
 	api.addFiles('views/app/audioNotification.html', 'client');
-	api.addFiles('views/app/burguer.html', 'client');
+	api.addFiles('views/app/burger.html', 'client');
 	api.addFiles('views/app/home.html', 'client');
 	api.addFiles('views/app/notAuthorized.html', 'client');
 	api.addFiles('views/app/pageContainer.html', 'client');
 	api.addFiles('views/app/pageSettingsContainer.html', 'client');
 	api.addFiles('views/app/privateHistory.html', 'client');
-	api.addFiles('views/app/requestPasswordChange.html', 'client');
 	api.addFiles('views/app/room.html', 'client');
 	api.addFiles('views/app/roomSearch.html', 'client');
 	api.addFiles('views/app/secretURL.html', 'client');
 	api.addFiles('views/app/userSearch.html', 'client');
-	api.addFiles('views/app/spotlight/mobileMessageMenu.html', 'client');
 	api.addFiles('views/app/spotlight/spotlight.html', 'client');
 	api.addFiles('views/app/videoCall/videoButtons.html', 'client');
 	api.addFiles('views/app/videoCall/videoCall.html', 'client');
@@ -100,10 +100,9 @@ Package.onUse(function(api) {
 	api.addFiles('views/fxos.coffee', 'client');
 	api.addFiles('views/modal.coffee', 'client');
 	api.addFiles('views/404/roomNotFound.coffee', 'client');
-	api.addFiles('views/app/burguer.coffee', 'client');
+	api.addFiles('views/app/burger.coffee', 'client');
 	api.addFiles('views/app/home.coffee', 'client');
 	api.addFiles('views/app/privateHistory.coffee', 'client');
-	api.addFiles('views/app/requestPasswordChange.js', 'client');
 	api.addFiles('views/app/room.coffee', 'client');
 	api.addFiles('views/app/roomSearch.coffee', 'client');
 	api.addFiles('views/app/secretURL.coffee', 'client');

@@ -5,13 +5,13 @@ Meteor.methods
 	push_test: ->
 		user = Meteor.user()
 		if not user?
-			throw new Meteor.Error 'unauthorized', '[methods] push_test -> Unauthorized'
+			throw new Meteor.Error 'error-not-allowed', 'Not allowed', { method: 'push_test' }
 
 		if not RocketChat.authz.hasRole(user._id, 'admin')
-			throw new Meteor.Error 'unauthorized', '[methods] push_test -> Unauthorized'
+			throw new Meteor.Error 'error-not-allowed', 'Not allowed', { method: 'push_test' }
 
 		if Push.enabled isnt true
-			throw new Meteor.Error 'push_disabled'
+			throw new Meteor.Error 'error-push-disabled', 'Push is disabled', { method: 'push_test' }
 
 		query =
 			$and: [
@@ -27,7 +27,7 @@ Meteor.methods
 		tokens = Push.appCollection.find(query).count()
 
 		if tokens is 0
-			throw new Meteor.Error 'no_tokens_for_this_user'
+			throw new Meteor.Error 'error-no-tokens-for-this-user', "There are no tokens for this user", { method: 'push_test' }
 
 		Push.send
 			from: 'push'
@@ -45,9 +45,8 @@ Meteor.methods
 
 
 configurePush = ->
-	console.log 'configuring push'
-
-	Push.debug = RocketChat.settings.get 'Push_debug'
+	if RocketChat.settings.get 'Push_debug'
+		console.log 'Push: configuring...'
 
 	if RocketChat.settings.get('Push_enable') is true
 		Push.allow
@@ -74,6 +73,12 @@ configurePush = ->
 					certData: RocketChat.settings.get 'Push_apn_dev_cert'
 					gateway: 'gateway.sandbox.push.apple.com'
 
+			if not apn.keyData? or apn.keyData.trim() is '' or not apn.keyData? or apn.keyData.trim() is ''
+				apn = undefined
+
+			if not gcm.apiKey? or gcm.apiKey.trim() is '' or not gcm.projectNumber? or gcm.projectNumber.trim() is ''
+				gcm = undefined
+
 		Push.Configure
 			apn: apn
 			gcm: gcm
@@ -95,8 +100,8 @@ configurePush = ->
 				if options.text isnt ''+options.text
 					throw new Error('Push.send: option "text" not a string')
 
-				if Push.debug
-					console.log('Push: Send message "' + options.title + '" via query', options.query)
+				if RocketChat.settings.get 'Push_debug'
+					console.log('Push: send message "' + options.title + '" via query', options.query)
 
 				query =
 					$and: [
@@ -110,8 +115,8 @@ configurePush = ->
 					]
 
 				Push.appCollection.find(query).forEach (app) ->
-					if Push.debug
-						console.log('send to token', app.token)
+					if RocketChat.settings.get 'Push_debug'
+						console.log('Push: send to token', app.token)
 
 					if app.token.apn?
 						service = 'apn'
@@ -120,13 +125,40 @@ configurePush = ->
 						service = 'gcm'
 						token = app.token.gcm
 
-					HTTP.post RocketChat.settings.get('Push_gateway') + "/push/#{service}/send",
-						data:
-							token: token
-							options: options
+					sendPush service, token, options
 
 		Push.enabled = true
 
+sendPush = (service, token, options, tries=0) ->
+	data =
+		data:
+			token: token
+			options: options
+
+	HTTP.post RocketChat.settings.get('Push_gateway') + "/push/#{service}/send", data, (error, response) ->
+		if response?.statusCode is 406
+			console.log('removing push token', token)
+			Push.appCollection.remove({
+				$or: [
+						{ 'token.apn': token }
+						{ 'token.gcm': token }
+					]
+			})
+			return
+
+		if not error?
+			return
+
+		SystemLogger.error 'Error sending push to gateway ('+tries+' try) ->', error
+		if tries <= 6
+			milli = Math.pow(10, tries+2)
+
+			SystemLogger.log 'Trying sending push to gateway again in', milli, 'milliseconds'
+
+			# Try again in 0.1s, 1s, 10s, 1m40s, 16m40s, 2h46m40s and 27h46m40s
+			Meteor.setTimeout ->
+				sendPush service, token, options, tries+1
+			, milli
 
 Meteor.startup ->
 	configurePush()

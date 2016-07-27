@@ -24,11 +24,14 @@ RocketChat.settings.add = (_id, value, options = {}) ->
 	options.valueSource = 'packageValue'
 	options.ts = new Date
 	options.hidden = false
-	options.blocked = false
+	options.blocked = options.blocked || false
 	options.sorter ?= RocketChat.settings._sorter++
 
 	if options.enableQuery?
 		options.enableQuery = JSON.stringify options.enableQuery
+
+	if options.i18nDefaultQuery?
+		options.i18nDefaultQuery = JSON.stringify options.i18nDefaultQuery
 
 	if process?.env?[_id]?
 		value = process.env[_id]
@@ -57,8 +60,8 @@ RocketChat.settings.add = (_id, value, options = {}) ->
 	if hiddenSettings[_id]?
 		options.hidden = true
 
-	if process?.env?['SETTING_OVERWRITE_' + _id]?
-		value = process.env['SETTING_OVERWRITE_' + _id]
+	if process?.env?['OVERWRITE_SETTING_' + _id]?
+		value = process.env['OVERWRITE_SETTING_' + _id]
 		if value.toLowerCase() is "true"
 			value = true
 		else if value.toLowerCase() is "false"
@@ -70,8 +73,13 @@ RocketChat.settings.add = (_id, value, options = {}) ->
 	updateOperations =
 		$set: options
 		$setOnInsert:
-			value: value
 			createdAt: new Date
+
+	if not options.value?
+		if options.force is true
+			updateOperations.$set.value = options.packageValue
+		else
+			updateOperations.$setOnInsert.value = value
 
 	if not options.section?
 		updateOperations.$unset = { section: 1 }
@@ -154,6 +162,8 @@ RocketChat.settings.updateById = (_id, value) ->
 
 	if not _id or not value?
 		return false
+
+	value._updatedAt = new Date
 
 	return RocketChat.models.Settings.updateValueById _id, value
 

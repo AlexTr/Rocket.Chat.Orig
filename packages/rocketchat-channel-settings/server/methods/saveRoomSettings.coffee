@@ -1,16 +1,16 @@
 Meteor.methods
 	saveRoomSettings: (rid, setting, value) ->
 		unless Match.test rid, String
-			throw new Meteor.Error 'invalid-rid', 'Invalid room'
+			throw new Meteor.Error 'error-invalid-room', 'Invalid room', { method: 'saveRoomSettings' }
 
 		if setting not in ['roomName', 'roomTopic', 'roomType', 'default']
-			throw new Meteor.Error 'invalid-settings', 'Invalid settings provided'
+			throw new Meteor.Error 'error-invalid-settings', 'Invalid settings provided', { method: 'saveRoomSettings' }
 
 		unless RocketChat.authz.hasPermission(Meteor.userId(), 'edit-room', rid)
-			throw new Meteor.Error 503, 'Not authorized'
+			throw new Meteor.Error 'error-action-not-allowed', 'Editing room is not allowed', { method: 'saveRoomSettings', action: 'Editing_room' }
 
 		if setting is 'default' and not RocketChat.authz.hasPermission(@userId, 'view-room-administration')
-			throw new Meteor.Error 503, 'Not authorized'
+			throw new Meteor.Error 'error-action-not-allowed', 'Viewing room administration is not allowed', { method: 'saveRoomSettings', action: 'Viewing_room_administration' }
 
 		room = RocketChat.models.Rooms.findOneById rid
 		if room?
@@ -20,11 +20,10 @@ Meteor.methods
 					RocketChat.models.Messages.createRoomRenamedWithRoomIdRoomNameAndUser rid, name, Meteor.user()
 				when 'roomTopic'
 					if value isnt room.topic
-						RocketChat.saveRoomTopic(rid, value)
-						RocketChat.models.Messages.createRoomSettingsChangedWithTypeRoomIdMessageAndUser 'room_changed_topic', rid, value, Meteor.user()
+						RocketChat.saveRoomTopic(rid, value, Meteor.user())
 				when 'roomType'
 					if value isnt room.t
-						RocketChat.saveRoomType(rid, value)
+						RocketChat.saveRoomType(rid, value, Meteor.user())
 						if value is 'c'
 							message = TAPi18n.__('Channel')
 						else
@@ -33,4 +32,4 @@ Meteor.methods
 				when 'default'
 					RocketChat.models.Rooms.saveDefaultById rid, value
 
-		return true
+		return { result: true, rid: room._id }

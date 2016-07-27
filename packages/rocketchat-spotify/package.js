@@ -19,9 +19,5 @@ Package.onUse(function(api) {
 	api.addFiles('lib/client/widget.coffee', 'client');
 	api.addFiles('lib/client/oembedSpotifyWidget.html', 'client');
 
-	api.addFiles('lib/spotify.coffee', ['server','client']);
-});
-
-Package.onTest(function(api) {
-
+	api.addFiles('lib/spotify.coffee', ['server', 'client']);
 });

@@ -1,3 +1,5 @@
+/* globals Push */
+
 RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 	// skips this callback if the message was edited
 	if (message.editedAt) {
@@ -9,7 +11,14 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 	/*
 	Increment unread couter if direct messages
 	 */
-	var indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+	var indexOf = [].indexOf || function(item) {
+		for (var i = 0, l = this.length; i < l; i++) {
+			if (i in this && this[i] === item) {
+				return i;
+			}
+		}
+		return -1;
+	};
 
 	var settings, desktopMentionIds, i, j, len, len1, highlights, mentionIds, highlightsIds, usersWithHighlights, mobileMentionIds, ref, ref1, toAll, userIdsToNotify, userIdsToPushNotify, userOfMention, userOfMentionId, usersOfDesktopMentions, usersOfMentionId, usersOfMentionItem, usersOfMobileMentions;
 
@@ -39,11 +48,11 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 	 * @returns {boolean}
 	 */
 	function messageContainsHighlight(message, highlights) {
-		if (! highlights || highlights.length == 0) { return false; }
+		if (! highlights || highlights.length === 0) { return false; }
 
 		var has = false;
-		highlights.some(function (highlight) {
-			var regexp = new RegExp(s.escapeRegExp(highlight),'i');
+		highlights.some(function(highlight) {
+			var regexp = new RegExp(s.escapeRegExp(highlight), 'i');
 			if (regexp.test(message.msg)) {
 				has = true;
 				return true;
@@ -55,50 +64,49 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 
 	settings = {};
 
-	settings.alwaysNotifyDesktopUsers = _.compact(_.map(RocketChat.models.Subscriptions.findAlwaysNotifyDesktopUsersByRoomId(room._id).fetch(), function(subscription) {
-		var ref;
-		return subscription != null ? (ref = subscription.u) != null ? ref._id : void 0 : void 0;
-	}));
-
-	settings.dontNotifyDesktopUsers = _.compact(_.map(RocketChat.models.Subscriptions.findDontNotifyDesktopUsersByRoomId(room._id).fetch(), function(subscription) {
-		var ref;
-		return subscription != null ? (ref = subscription.u) != null ? ref._id : void 0 : void 0;
-	}));
-
-	settings.alwaysNotifyMobileUsers = _.compact(_.map(RocketChat.models.Subscriptions.findAlwaysNotifyMobileUsersByRoomId(room._id).fetch(), function(subscription) {
-		var ref;
-		return subscription != null ? (ref = subscription.u) != null ? ref._id : void 0 : void 0;
-	}));
-
-	settings.dontNotifyMobileUsers = _.compact(_.map(RocketChat.models.Subscriptions.findDontNotifyMobileUsersByRoomId(room._id).fetch(), function(subscription) {
-		var ref;
-		return subscription != null ? (ref = subscription.u) != null ? ref._id : void 0 : void 0;
-	}));
+	settings.alwaysNotifyDesktopUsers = [];
+	settings.dontNotifyDesktopUsers = [];
+	settings.alwaysNotifyMobileUsers = [];
+	settings.dontNotifyMobileUsers = [];
+	RocketChat.models.Subscriptions.findNotificationPreferencesByRoom(room._id).forEach(function(subscription) {
+		if (subscription.desktopNotifications === 'all') {
+			settings.alwaysNotifyDesktopUsers.push(subscription.u._id);
+		} else if (subscription.desktopNotifications === 'nothing') {
+			settings.dontNotifyDesktopUsers.push(subscription.u._id);
+		} else if (subscription.mobilePushNotifications === 'all') {
+			settings.alwaysNotifyMobileUsers.push(subscription.u._id);
+		} else if (subscription.mobilePushNotifications === 'nothing') {
+			settings.dontNotifyMobileUsers.push(subscription.u._id);
+		}
+	});
 
 	userIdsToNotify = [];
 	userIdsToPushNotify = [];
 	usersWithHighlights = [];
-	highlights = RocketChat.models.Users.findUsersByUsernames(room.usernames, { fields: { '_id': 1, 'settings.preferences.highlights': 1 }}).fetch();
+	highlights = RocketChat.models.Users.findUsersByUsernamesWithHighlights(room.usernames, { fields: { '_id': 1, 'settings.preferences.highlights': 1 }}).fetch();
 
-	highlights.forEach(function (user) {
+	highlights.forEach(function(user) {
 		if (user && user.settings && user.settings.preferences && messageContainsHighlight(message, user.settings.preferences.highlights)) {
 			usersWithHighlights.push(user);
 		}
 	});
 
+	let push_message;
 	//Set variables depending on Push Notification settings
 	if (RocketChat.settings.get('Push_show_message')) {
-		push_message = message.msg
+		push_message = message.msg;
 	} else {
-		push_message = ' '
+		push_message = ' ';
 	}
 
+	let push_username;
+	let push_room;
 	if (RocketChat.settings.get('Push_show_username_room')) {
-		push_username = "@" + user.username
-		push_room = "#" + room.name + " "
+		push_username = '@' + user.username;
+		push_room = '#' + room.name + ' ';
 	} else {
-		push_username = ' '
-		push_room = ' '
+		push_username = ' ';
+		push_room = ' ';
 	}
 
 	if ((room.t == null) || room.t === 'd') {
@@ -113,7 +121,7 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 		});
 		if ((userOfMention != null) && canBeNotified(userOfMentionId, 'mobile')) {
 			RocketChat.Notifications.notifyUser(userOfMention._id, 'notification', {
-				title: "@" + user.username,
+				title: '@' + user.username,
 				text: message.msg,
 				payload: {
 					rid: message.rid,
@@ -131,7 +139,7 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 					text: push_message,
 					apn: {
 						// ternary operator
-						text: push_username + ((push_username != ' ' && push_message != ' ') ? ":\n" : '') + push_message
+						text: push_username + ((push_username !== ' ' && push_message !== ' ') ? ':\n' : '') + push_message
 					},
 					badge: 1,
 					sound: 'chime',
@@ -160,6 +168,7 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 		if (mentionIds.length > 0 || settings.alwaysNotifyDesktopUsers.length > 0) {
 			desktopMentionIds = _.union(mentionIds, settings.alwaysNotifyDesktopUsers);
 			desktopMentionIds = _.difference(desktopMentionIds, settings.dontNotifyDesktopUsers);
+
 			usersOfDesktopMentions = RocketChat.models.Users.find({
 				_id: {
 					$in: desktopMentionIds
@@ -171,21 +180,32 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 				}
 			}).fetch();
 			if (room.t === 'c' && !toAll) {
+				const callJoin = function(usersOfMentionItem) {
+					Meteor.runAsUser(usersOfMentionItem._id, function() {
+						return Meteor.call('joinRoom', room._id);
+					});
+				};
 				for (i = 0, len = usersOfDesktopMentions.length; i < len; i++) {
 					usersOfMentionItem = usersOfDesktopMentions[i];
 					if (room.usernames.indexOf(usersOfMentionItem.username) === -1) {
-						Meteor.runAsUser(usersOfMentionItem._id, function() {
-							return Meteor.call('joinRoom', room._id);
-						});
+						callJoin(usersOfMentionItem);
 					}
 				}
 			}
+
+			if (room.t !== 'c') {
+				usersOfDesktopMentions = _.reject(usersOfDesktopMentions, (usersOfMentionItem) => {
+					return room.usernames.indexOf(usersOfMentionItem.username) === -1;
+				});
+			}
+
 			userIdsToNotify = _.pluck(usersOfDesktopMentions, '_id');
 		}
 
 		if (mentionIds.length > 0 || settings.alwaysNotifyMobileUsers.length > 0) {
 			mobileMentionIds = _.union(mentionIds, settings.alwaysNotifyMobileUsers);
 			mobileMentionIds = _.difference(mobileMentionIds, settings.dontNotifyMobileUsers);
+
 			usersOfMobileMentions = RocketChat.models.Users.find({
 				_id: {
 					$in: mobileMentionIds
@@ -197,6 +217,13 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 					statusConnection: 1
 				}
 			}).fetch();
+
+			if (room.t !== 'c') {
+				usersOfMobileMentions = _.reject(usersOfMobileMentions, (usersOfMentionItem) => {
+					return room.usernames.indexOf(usersOfMentionItem.username) === -1;
+				});
+			}
+
 			userIdsToPushNotify = _.pluck(_.filter(usersOfMobileMentions, function(user) {
 				return user.statusConnection !== 'online';
 			}), '_id');
@@ -240,8 +267,12 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 		if (userIdsToNotify.length > 0) {
 			for (j = 0, len1 = userIdsToNotify.length; j < len1; j++) {
 				usersOfMentionId = userIdsToNotify[j];
+				let title = '@' + user.username;
+				if (room.name) {
+					title += ' @ #' + room.name;
+				}
 				RocketChat.Notifications.notifyUser(usersOfMentionId, 'notification', {
-					title: "@" + user.username + " @ #" + room.name,
+					title: title,
 					text: message.msg,
 					payload: {
 						rid: message.rid,
@@ -261,7 +292,7 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 					text: push_message,
 					apn: {
 						// ternary operator
-						text: push_room + push_username + ((push_username != ' ' && push_room != ' ' && push_message != ' ') ? ":\n" : '') + push_message
+						text: push_room + push_username + ((push_username !== ' ' && push_room !== ' ' && push_message !== ' ') ? ':\n' : '') + push_message
 					},
 					badge: 1,
 					sound: 'chime',

@@ -6,11 +6,11 @@
 	getRoom = (rid) ->
 		if not histories[rid]?
 			histories[rid] =
-				hasMore: ReactiveVar true
-				hasMoreNext: ReactiveVar false
-				isLoading: ReactiveVar false
-				unreadNotLoaded: ReactiveVar 0
-				firstUnread: ReactiveVar {}
+				hasMore: new ReactiveVar true
+				hasMoreNext: new ReactiveVar false
+				isLoading: new ReactiveVar false
+				unreadNotLoaded: new ReactiveVar 0
+				firstUnread: new ReactiveVar
 				loaded: 0
 
 		return histories[rid]
@@ -50,7 +50,9 @@
 			if wrapper?
 				previousHeight = wrapper.scrollHeight
 
-			ChatMessage.upsert {_id: item._id}, item for item in result?.messages or [] when item.t isnt 'command'
+			for item in result?.messages or [] when item.t isnt 'command'
+				item.roles = _.union(UserRoles.findOne(item.u?._id)?.roles, RoomRoles.findOne({rid: item.rid, 'u._id': item.u?._id})?.roles)
+				ChatMessage.upsert {_id: item._id}, item
 
 			if wrapper?
 				heightDiff = wrapper.scrollHeight - previousHeight
@@ -93,6 +95,7 @@
 			Meteor.call 'loadNextMessages', rid, ts, limit, (err, result) ->
 				for item in result?.messages or []
 					if item.t isnt 'command'
+						item.roles = _.union(UserRoles.findOne(item.u?._id)?.roles, RoomRoles.findOne({rid: item.rid, 'u._id': item.u?._id})?.roles)
 						ChatMessage.upsert {_id: item._id}, item
 
 				Meteor.defer ->
@@ -124,7 +127,7 @@
 
 			setTimeout ->
 				msgElement.removeClass('highlight')
-			, 3000
+			, 500
 		else
 			room = getRoom message.rid
 			room.isLoading.set true
@@ -143,6 +146,7 @@
 			Meteor.call 'loadSurroundingMessages', message, limit, (err, result) ->
 				for item in result?.messages or []
 					if item.t isnt 'command'
+						item.roles = _.union(UserRoles.findOne(item.u?._id)?.roles, RoomRoles.findOne({rid: item.rid, 'u._id': item.u?._id})?.roles)
 						ChatMessage.upsert {_id: item._id}, item
 
 				Meteor.defer ->
@@ -165,7 +169,7 @@
 
 					setTimeout ->
 						msgElement.removeClass('highlight')
-					, 3000
+					, 500
 				room.loaded += result.messages.length
 				room.hasMore.set result.moreBefore
 				room.hasMoreNext.set result.moreAfter

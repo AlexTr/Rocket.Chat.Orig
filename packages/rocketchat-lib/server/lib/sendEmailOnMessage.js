@@ -9,7 +9,7 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 	if (room.t === 'd') {
 		usersToSendEmail[message.rid.replace(message.u._id, '')] = 1;
 
-		emailSubject = TAPi18n.__("Offline_DM_Email", {
+		emailSubject = TAPi18n.__('Offline_DM_Email', {
 			site: RocketChat.settings.get('Site_Name'),
 			user: message.u.username
 		});
@@ -17,11 +17,11 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 	} else {
 		if (message.mentions) {
 			message.mentions.forEach(function(mention) {
-				return usersToSendEmail[mention._id] = 1;
+				usersToSendEmail[mention._id] = 1;
 			});
 		}
 
-		emailSubject = TAPi18n.__("Offline_Mention_Email", {
+		emailSubject = TAPi18n.__('Offline_Mention_Email', {
 			site: RocketChat.settings.get('Site_Name'),
 			user: message.u.username,
 			room: room.name
@@ -37,7 +37,11 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 			message.html = message.html.replace(token.token, token.text);
 		});
 	}
-	message.html = message.html.replace(/\n/gm, '<br/>');
+
+
+	var header = RocketChat.placeholders.replace(RocketChat.settings.get('Email_Header') || '');
+	var footer = RocketChat.placeholders.replace(RocketChat.settings.get('Email_Footer') || '');
+	message.html = header + message.html.replace(/\n/gm, '<br/>') + footer;
 
 	RocketChat.models.Subscriptions.findWithSendEmailByRoomId(room._id).forEach((sub) => {
 		switch (sub.emailNotifications) {
@@ -57,7 +61,7 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 		}
 	});
 
-	userIdsToSendEmail = Object.keys(usersToSendEmail);
+	var userIdsToSendEmail = Object.keys(usersToSendEmail);
 
 	if (userIdsToSendEmail.length > 0) {
 		var usersOfMention = RocketChat.models.Users.getUsersToSendOfflineEmail(userIdsToSendEmail).fetch();
@@ -67,13 +71,19 @@ RocketChat.callbacks.add('afterSaveMessage', function(message, room) {
 				if (user.settings && user.settings.preferences && user.settings.preferences.emailNotificationMode && user.settings.preferences.emailNotificationMode === 'disabled' && usersToSendEmail[user._id] !== 'force') {
 					return;
 				}
+
+				// Checks if user is in the room he/she is mentioned (unless it's public channel)
+				if (room.t !== 'c' && room.usernames.indexOf(user.username) === -1) {
+					return;
+				}
+
 				user.emails.some((email) => {
 					if (email.verified) {
-						var email = {
+						email = {
 							to: email.address,
 							from: RocketChat.settings.get('From_Email'),
 							subject: emailSubject,
-							html: "&gt; " + message.html
+							html: '&gt; ' + message.html
 						};
 
 						Email.send(email);

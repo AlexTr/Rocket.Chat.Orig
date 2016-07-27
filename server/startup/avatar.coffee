@@ -30,9 +30,15 @@ Meteor.startup ->
 		absolutePath: path
 		transformWrite: transformWrite
 
-	WebApp.connectHandlers.use '/avatar/', (req, res, next) ->
+	WebApp.connectHandlers.use '/avatar/', Meteor.bindEnvironment (req, res, next) ->
 		params =
 			username: decodeURIComponent(req.url.replace(/^\//, '').replace(/\?.*$/, ''))
+
+		if _.isEmpty params.username
+			res.writeHead 403
+			res.write 'Forbidden'
+			res.end()
+			return
 
 		if params.username[0] isnt '@'
 			if Meteor.settings?.public?.sandstorm

@@ -1,14 +1,14 @@
 <template name="register">
 	<form id="livechat-registration" class="livechat-form">
 		<div class="error">
-			<span>{{error}}</span>
+			<span>{{{error}}}</span>
 		</div>
 
 		<label>
 			{{{welcomeMessage}}}
 		</label>
 		<input type="text" name="name" id="guestName" placeholder="{{_ "Name"}}">
-		<input type="email" name="email" id="guestEmail" placeholder="{{_ "E-mail"}}">
+		<input type="email" name="email" id="guestEmail" placeholder="{{_ "Email"}}">
 
 		{{#if hasDepartments}}
 			<select name="department">

@@ -66,7 +66,9 @@
 Meteor.methods
 	getAvatarSuggestion: ->
 		if not Meteor.userId()
-			throw new Meteor.Error 203, '[methods] getAvatarSuggestion -> Usuário não logado'
+			throw new Meteor.Error 'error-invalid-user', 'Invalid user', { method: 'getAvatarSuggestion' }
+
+		@unblock()
 
 		user = Meteor.user()
 
