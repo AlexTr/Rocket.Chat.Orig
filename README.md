@@ -17,6 +17,7 @@
    * [Sandstorm.io](#sandstormio) 
    * [DPlatform](#dplatform) 
    * [IndieHosters](#indiehosters)
+   * [Ubuntu 16.04](#ubuntu-1604)
    * [Cloudron.io](#cloudronio) 
    * [Nitrous.io](#nitrousio)
    * [Heroku](#heroku)
@@ -28,7 +29,6 @@
   * [Raspberry Pi 2](#raspberry-pi-2)
   * [Koozali SME](#koozali-sme)
   * [Ubuntu VPS](#ubuntu-vps)
-  * [Ubuntu Software Center](#ubuntu-software-center)
 * [About Rocket.Chat](#about-rocketchat)
   * [On the News](#on-the-news)
   * [Features](#features)
@@ -89,6 +89,15 @@ Easiest way to install a ready-to-run Rocket.Chat server on a Linux machine, VM,
 Get your Rocket.Chat instance hosted in a "as a Service" style. You register and we manage it for you! (updates, backup...)
 
 [![Rocket.Chat on IndieHosters](https://indie.host/signup.png)](https://indiehosters.net/shop/product/rocket-chat-21)
+
+## Ubuntu 16.04
+[![Ubuntu Apps Explorer](https://raw.githubusercontent.com/Sing-Li/bbug/master/images/uappexplorer.png)](https://uappexplorer.com/app/rocketchat-server.rocketchat)
+
+Deploy from shell:
+
+`snap install rocketchat-server`
+
+In under 30 seconds, your Rocket.Chat server will be up and running at `http://host-ip:3000`
 
 ## Cloudron.io
 
@@ -172,11 +181,6 @@ Add Rocket.Chat to this world famous time tested small enterprise server today:
 ## Ubuntu VPS
 Follow these [deployment instructions](https://rocket.chat/docs/installation/manual-installation/ubuntu/)
 
-## Ubuntu Software Center
-Easy one click install right from your Ubuntu Desktop (coming soon)
-
-[![Ubuntu Software Center](https://raw.githubusercontent.com/Sing-Li/bbug/master/images/ubuntusoft.png)]()
-
 # About Rocket.Chat
 
 Rocket.Chat is a Web Chat Server, developed in JavaScript, using the [Meteor](https://www.meteor.com/install) fullstack framework.
@@ -225,7 +229,9 @@ It is a great solution for communities and companies wanting to privately host t
 - Avatars
 - Markdown
 - Emojis
+- Custom Emojis
 - Reactions
+- One touch Geolocation
 - TeX Math Rendering - inline math typesetting
 - Media Embeds
 - Link Previews
@@ -236,7 +242,7 @@ It is a great solution for communities and companies wanting to privately host t
 - Full text search
 - Live chat / Messaging call center
 - LDAP Authentication
-- CAS 1.0 support for education institutions and hosting providers worldwide
+- CAS 1.0, 2.0 support for education institutions and hosting providers worldwide
 - Support for Okta SSO through SAML v2
 - I18n - Supports 22 Languages
 - Hubot Friendly
@@ -246,7 +252,7 @@ It is a great solution for communities and companies wanting to privately host t
 - Audio calls
 - Multi-users Audio Conference
 - Screensharing
-- XMPP bridge ([try it](https://demo.rocket.chat/channel/xmppbridge))
+- XMPP bridge ([try it](https://demo.rocket.chat/channel/general))
 - REST APIs
 - Remote Locations Video Monitoring
 - Native real-time APIs for Microsoft C#, Visual Basic, F# and other .NET supported languages ([Get it!](https://www.nuget.org/packages/Rocket.Chat.Net/0.0.12-pre))
@@ -291,8 +297,10 @@ It is a great solution for communities and companies wanting to privately host t
 Read about [how it all started](http://osdelivers.blackducksoftware.com/2016/06/10/rocket-chat-hosted-chat-services/).
 
 ## Awards
+[![InfoWorld Bossie Awards 2016 - Best Open Source Applications](https://raw.githubusercontent.com/Sing-Li/bbug/master/images/bossie.png)](http://www.infoworld.com/article/3122000/open-source-tools/bossie-awards-2016-the-best-open-source-applications.html#slide4)
 
-[![Black Duck Open Source Rookie of the Year](https://raw.githubusercontent.com/Sing-Li/bbug/master/images/blackducksm.png)](https://www2.blackducksoftware.com/news/releases/black-duck-announces-open-source-rookies-of-the-year)
+[![Black Duck Open Source Rookie of the Year for 2015](https://raw.githubusercontent.com/Sing-Li/bbug/master/images/blackducksm.png)](https://info.blackducksoftware.com/OpenSourceRookies2015.html)
+
 
 ## Issues
 
@@ -372,17 +380,15 @@ A lot of work has already gone into Rocket.Chat, but we have much bigger plans f
 
 # Credits
 
-Thanks to
+Thanks to our core team
 [Aaron Ogle](https://github.com/geekgonecrazy),
 [Bradley Hilton](https://github.com/Graywolf336),
 [Diego Sampaio](https://github.com/sampaiodiego),
 [Gabriel Engel](https://github.com/engelgabriel),
-[George Secrieru](https://github.com/gmsecrieru),
 [Marcelo Schmidt](https://github.com/marceloschmidt),
-[Rafael Caferati](https://github.com/rcaferati),
 [Rodrigo Nascimento](https://github.com/rodrigok),
 [Sing Li](https://github.com/Sing-Li),
-and many others.
+and to hundreds of awesome [contributors](https://github.com/RocketChat/Rocket.Chat/graphs/contributors).
 
 Emoji provided free by [Emoji One](http://emojione.com)
 
@@ -395,5 +401,8 @@ Hosting powered by [Rackspace](https://rackspace.com)
 Rocket.Chat will be free forever, but you can help us speed-up the development!
 
 [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZL94ZE6LGVUSN)
+
+[![Bitcoins](https://github.com/RocketChat/Rocket.Chat.Docs/blob/master/1.%20Contributing/Donating/coinbase.png?raw=true)](https://www.coinbase.com/checkouts/ac2fa967efca7f6fc1201d46bdccb875)
+
 
 [BountySource](https://www.bountysource.com/teams/rocketchat)

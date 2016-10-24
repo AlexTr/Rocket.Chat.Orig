@@ -1,12 +1,12 @@
 Meteor.methods
-	pinMessage: (message) ->
+	pinMessage: (message, pinnedAt) ->
 		if not Meteor.userId()
 			throw new Meteor.Error('error-invalid-user', "Invalid user", { method: 'pinMessage' })
 
 		if not RocketChat.settings.get 'Message_AllowPinning'
 			throw new Meteor.Error 'error-action-not-allowed', 'Message pinning not allowed', { method: 'pinMessage', action: 'Message_pinning' }
 
-		room = RocketChat.models.Rooms.findOne({ _id: message.rid })
+		room = RocketChat.models.Rooms.findOneById(message.rid)
 
 		if Array.isArray(room.usernames) && room.usernames.indexOf(Meteor.user().username) is -1
 			return false
@@ -18,7 +18,7 @@ Meteor.methods
 		me = RocketChat.models.Users.findOneById Meteor.userId()
 
 		message.pinned = true
-		message.pinnedAt = Date.now
+		message.pinnedAt = pinnedAt || Date.now
 		message.pinnedBy =
 			_id: Meteor.userId()
 			username: me.username
@@ -42,7 +42,7 @@ Meteor.methods
 		if not RocketChat.settings.get 'Message_AllowPinning'
 			throw new Meteor.Error 'error-action-not-allowed', 'Message pinning not allowed', { method: 'unpinMessage', action: 'Message_pinning' }
 
-		room = RocketChat.models.Rooms.findOne({ _id: message.rid })
+		room = RocketChat.models.Rooms.findOneById(message.rid)
 
 		if Array.isArray(room.usernames) && room.usernames.indexOf(Meteor.user().username) is -1
 			return false

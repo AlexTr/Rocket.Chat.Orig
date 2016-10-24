@@ -34,6 +34,9 @@ Template.chatRoomItem.helpers
 	route: ->
 		return RocketChat.roomTypes.getRouteLink @t, @
 
+	archived: ->
+		return if this.archived then 'archived'
+
 Template.chatRoomItem.rendered = ->
 	if not (FlowRouter.getParam('_id')? and FlowRouter.getParam('_id') is this.data.rid) and not this.data.ls and this.data.alert is true
 		KonchatNotification.newRoom(this.data.rid)
@@ -50,15 +53,14 @@ Template.chatRoomItem.events
 		rid = this.rid
 		name = this.name
 
-		warnText = switch
-			when this.t == 'c' then 'Hide_Room_Warning'
-			when this.t == 'p' then 'Hide_Group_Warning'
-			when this.t == 'd' then 'Hide_Private_Warning'
-
+		warnText = switch this.t
+			when 'c' then 'Hide_Room_Warning'
+			when 'p' then 'Hide_Group_Warning'
+			when 'd' then 'Hide_Private_Warning'
 
 		swal {
 			title: t('Are_you_sure')
-			text: t(warnText, name)
+			text: if warnText then t(warnText, name) else ''
 			type: 'warning'
 			showCancelButton: true
 			confirmButtonColor: '#DD6B55'
@@ -73,6 +75,9 @@ Template.chatRoomItem.events
 			Meteor.call 'hideRoom', rid, (err) ->
 				if err
 					handleError(err)
+				else
+					if rid is Session.get('openedRoom')
+						Session.delete('openedRoom')
 
 	'click .leave-room': (e) ->
 		e.stopPropagation()

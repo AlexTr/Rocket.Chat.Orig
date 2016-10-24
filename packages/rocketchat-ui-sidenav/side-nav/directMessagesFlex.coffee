@@ -18,7 +18,7 @@ Template.directMessagesFlex.helpers
 					filter:
 						exceptions: [Meteor.user().username]
 					selector: (match) ->
-						return { username: match }
+						return { term: match }
 					sort: 'username'
 				}
 			]

@@ -32,8 +32,10 @@ reactive-var
 reload
 service-configuration
 session
+shell-server
 spacebars
-standard-minifiers
+standard-minifier-css
+standard-minifier-js
 tracker
 
 rocketchat:action-links
@@ -45,8 +47,12 @@ rocketchat:cas
 rocketchat:channel-settings
 rocketchat:channel-settings-mail-messages
 rocketchat:colors
+rocketchat:crowd
 rocketchat:custom-oauth
-rocketchat:emojione
+rocketchat:error-handler
+rocketchat:emoji
+rocketchat:emoji-custom
+rocketchat:emoji-emojione
 rocketchat:favico
 rocketchat:file
 rocketchat:file-upload
@@ -64,10 +70,12 @@ rocketchat:lib
 rocketchat:livechat
 rocketchat:logger
 rocketchat:mailer
+rocketchat:mapview
 rocketchat:markdown
 rocketchat:mentions
 rocketchat:mentions-flextab
 rocketchat:message-attachments
+rocketchat:message-mark-as-unread
 rocketchat:message-pin
 rocketchat:message-star
 rocketchat:migrations
@@ -77,6 +85,7 @@ rocketchat:otr
 rocketchat:piwik
 rocketchat:push-notifications
 rocketchat:reactions
+rocketchat:sandstorm
 rocketchat:slackbridge
 rocketchat:slashcommands-archive
 rocketchat:slashcommands-asciiarts
@@ -87,8 +96,10 @@ rocketchat:slashcommands-kick
 rocketchat:slashcommands-leave
 rocketchat:slashcommands-me
 rocketchat:slashcommands-mute
+rocketchat:slashcommands-open
 rocketchat:slashcommands-topic
 rocketchat:slashcommands-unarchive
+rocketchat:smarsh-connector
 rocketchat:spotify
 rocketchat:statistics
 rocketchat:streamer
@@ -103,10 +114,12 @@ rocketchat:ui-login
 rocketchat:ui-master
 rocketchat:ui-message
 rocketchat:ui-sidenav
+rocketchat:ui-vrecord
 rocketchat:version
+rocketchat:videobridge
 rocketchat:webrtc
 rocketchat:wordpress
-rocketchat:videobridge
+#rocketchat:bot-helpers
 #rocketchat:chatops
 #rocketchat:internal-hubot
 #rocketchat:irc
@@ -118,7 +131,6 @@ konecty:multiple-instances-status
 konecty:nrr
 konecty:user-presence
 
-arunoda:streams
 chrismbeckett:toastr
 dispatch:run-as-user
 francocatena:status

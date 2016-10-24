@@ -3,8 +3,7 @@
  */
 class LivechatDepartment extends RocketChat.models._Base {
 	constructor() {
-		super();
-		this._initModel('livechat_department');
+		super('livechat_department');
 	}
 
 	// FIND
@@ -51,8 +50,8 @@ class LivechatDepartment extends RocketChat.models._Base {
 				agentId: agent.agentId,
 				departmentId: _id,
 				username: agent.username,
-				count: parseInt(agent.count),
-				order: parseInt(agent.order)
+				count: agent.count ? parseInt(agent.count) : 0,
+				order: agent.order ? parseInt(agent.order) : 0
 			});
 		});
 

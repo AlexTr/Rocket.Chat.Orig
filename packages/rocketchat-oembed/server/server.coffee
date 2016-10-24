@@ -3,6 +3,7 @@ querystring = Npm.require('querystring')
 request = HTTPInternals.NpmModules.request.module
 iconv = Npm.require('iconv-lite')
 ipRangeCheck = Npm.require('ip-range-check')
+he = Npm.require('he')
 
 OEmbed = {}
 
@@ -48,14 +49,17 @@ getUrlContent = (urlObj, redirectCount = 5, callback) ->
 			'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36'
 
 	headers = null
+	statusCode = null
+	error = null
 	chunks = []
 	chunksTotalLength = 0
 
 	stream = request opts
 	stream.on 'response', (response) ->
+		statusCode = response.statusCode
+		headers = response.headers
 		if response.statusCode isnt 200
 			return stream.abort()
-		headers = response.headers
 
 	stream.on 'data', (chunk) ->
 		chunks.push chunk
@@ -64,19 +68,23 @@ getUrlContent = (urlObj, redirectCount = 5, callback) ->
 			stream.abort()
 
 	stream.on 'end', Meteor.bindEnvironment ->
+		if error?
+			return callback null, {
+				error: error
+				parsedUrl: parsedUrl
+			}
+
 		buffer = Buffer.concat(chunks)
 
 		callback null, {
 			headers: headers
 			body: toUtf8 buffer
 			parsedUrl: parsedUrl
+			statusCode: statusCode
 		}
 
-	stream.on 'error', (error) ->
-		callback null, {
-			error: error
-			parsedUrl: parsedUrl
-		}
+	stream.on 'error', (err) ->
+		error = err
 
 OEmbed.getUrlMeta = (url, withFragment) ->
 	getUrlContentSync = Meteor.wrapAsync getUrlContent
@@ -105,20 +113,20 @@ OEmbed.getUrlMeta = (url, withFragment) ->
 
 	if content?.body?
 		metas = {}
-		content.body.replace /<title>((.|\n)+?)<\/title>/gmi, (meta, title) ->
-			metas.pageTitle = title
+		content.body.replace /<title[^>]*>([^<]*)<\/title>/gmi, (meta, title) ->
+			metas.pageTitle ?= he.unescape title
 
-		content.body.replace /<meta[^>]*(?:name|property)=[']([^']*)['][^>]*content=[']([^']*)['][^>]*>/gmi, (meta, name, value) ->
-			metas[changeCase.camelCase(name)] = value
+		content.body.replace /<meta[^>]*(?:name|property)=[']([^']*)['][^>]*\scontent=[']([^']*)['][^>]*>/gmi, (meta, name, value) ->
+			metas[changeCase.camelCase(name)] ?= he.unescape value
 
-		content.body.replace /<meta[^>]*(?:name|property)=["]([^"]*)["][^>]*content=["]([^"]*)["][^>]*>/gmi, (meta, name, value) ->
-			metas[changeCase.camelCase(name)] = value
+		content.body.replace /<meta[^>]*(?:name|property)=["]([^"]*)["][^>]*\scontent=["]([^"]*)["][^>]*>/gmi, (meta, name, value) ->
+			metas[changeCase.camelCase(name)] ?= he.unescape value
 
-		content.body.replace /<meta[^>]*content=[']([^']*)['][^>]*(?:name|property)=[']([^']*)['][^>]*>/gmi, (meta, value, name) ->
-			metas[changeCase.camelCase(name)] = value
+		content.body.replace /<meta[^>]*\scontent=[']([^']*)['][^>]*(?:name|property)=[']([^']*)['][^>]*>/gmi, (meta, value, name) ->
+			metas[changeCase.camelCase(name)] ?= he.unescape value
 
-		content.body.replace /<meta[^>]*content=["]([^"]*)["][^>]*(?:name|property)=["]([^"]*)["][^>]*>/gmi, (meta, value, name) ->
-			metas[changeCase.camelCase(name)] = value
+		content.body.replace /<meta[^>]*\scontent=["]([^"]*)["][^>]*(?:name|property)=["]([^"]*)["][^>]*>/gmi, (meta, value, name) ->
+			metas[changeCase.camelCase(name)] ?= he.unescape value
 
 
 		if metas.fragment is '!' and not withFragment?
@@ -130,6 +138,9 @@ OEmbed.getUrlMeta = (url, withFragment) ->
 		headers = {}
 		for header, value of content.headers
 			headers[changeCase.camelCase(header)] = value
+
+	if content?.statusCode isnt 200
+		return data
 
 	data = RocketChat.callbacks.run 'oembed:afterParseContent',
 		meta: metas
@@ -182,6 +193,13 @@ OEmbed.RocketUrlParser = (message) ->
 		changed = false
 		message.urls.forEach (item) ->
 			if item.ignoreParse is true then return
+			if item.url.startsWith "grain://"
+				changed = true
+				item.meta =
+					sandstorm:
+						grain: item.sandstormViewInfo
+				return
+
 			if not /^https?:\/\//i.test item.url then return
 
 			data = OEmbed.getUrlMetaWithCache item.url

@@ -1,6 +1,6 @@
 RocketChat.models.Messages = new class extends RocketChat.models._Base
 	constructor: ->
-		@_initModel 'message'
+		super('message')
 
 		@tryEnsureIndex { 'rid': 1, 'ts': 1 }
 		@tryEnsureIndex { 'ts': 1 }
@@ -13,6 +13,7 @@ RocketChat.models.Messages = new class extends RocketChat.models._Base
 		@tryEnsureIndex { 'file._id': 1 }, { sparse: 1 }
 		@tryEnsureIndex { 'mentions.username': 1 }, { sparse: 1 }
 		@tryEnsureIndex { 'pinned': 1 }, { sparse: 1 }
+		@tryEnsureIndex { 'location': '2dsphere' }
 
 
 	# FIND ONE
@@ -137,13 +138,7 @@ RocketChat.models.Messages = new class extends RocketChat.models._Base
 		record.editedBy =
 			_id: Meteor.userId()
 			username: me.username
-		record.pinned = record.pinned
-		record.pinnedAt = record.pinnedAt
-		record.pinnedBy =
-			_id: record.pinnedBy?._id
-			username: record.pinnedBy?.username
 		delete record._id
-
 		return @insert record
 
 	# UPDATE
@@ -157,8 +152,7 @@ RocketChat.models.Messages = new class extends RocketChat.models._Base
 
 		return @update query, update
 
-	setAsDeletedById: (_id) ->
-		me = RocketChat.models.Users.findOneById Meteor.userId()
+	setAsDeletedByIdAndUser: (_id, user) ->
 		query =
 			_id: _id
 
@@ -171,19 +165,19 @@ RocketChat.models.Messages = new class extends RocketChat.models._Base
 				attachments: []
 				editedAt: new Date()
 				editedBy:
-					_id: Meteor.userId()
-					username: me.username
+					_id: user._id
+					username: user.username
 
 		return @update query, update
 
-	setPinnedByIdAndUserId: (_id, pinnedBy, pinned=true) ->
+	setPinnedByIdAndUserId: (_id, pinnedBy, pinned=true, pinnedAt=0) ->
 		query =
 			_id: _id
 
 		update =
 			$set:
 				pinned: pinned
-				pinnedAt: new Date
+				pinnedAt: pinnedAt || new Date
 				pinnedBy: pinnedBy
 
 		return @update query, update
@@ -262,12 +256,15 @@ RocketChat.models.Messages = new class extends RocketChat.models._Base
 		update =
 			$set:
 				attachments: attachments
-		console.log(query, update);
+
 		return @update query, update
 
 
 	# INSERT
 	createWithTypeRoomIdMessageAndUser: (type, roomId, message, user, extraData) ->
+		room = RocketChat.models.Rooms.findOneById roomId, { fields: { sysMes: 1 }}
+		if room?.sysMes is false
+			return
 		record =
 			t: type
 			rid: roomId

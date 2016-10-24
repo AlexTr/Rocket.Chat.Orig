@@ -1,6 +1,6 @@
 RocketChat.models.Rooms = new class extends RocketChat.models._Base
 	constructor: ->
-		@_initModel 'room'
+		super('room')
 
 		@tryEnsureIndex { 'name': 1 }, { unique: 1, sparse: 1 }
 		@tryEnsureIndex { 'default': 1 }
@@ -15,6 +15,17 @@ RocketChat.models.Rooms = new class extends RocketChat.models._Base
 			_id: _id
 
 		return @findOne query, options
+
+	findOneByIdOrName: (_idOrName, options) ->
+		query = {
+			$or: [{
+				_id: _idOrName
+			}, {
+				name: _idOrName
+			}]
+		}
+
+		return this.findOne(query, options)
 
 	findOneByImportId: (_id, options) ->
 		query =
@@ -139,6 +150,15 @@ RocketChat.models.Rooms = new class extends RocketChat.models._Base
 
 		return @find query, options
 
+	findByNameAndTypeNotContainingUsername: (name, type, username, options) ->
+		query =
+			t: type
+			name: name
+			usernames:
+				$ne: username
+
+		return @find query, options
+
 	findByNameStartingAndTypes: (name, types, options) ->
 		nameRegex = new RegExp "^" + s.trim(s.escapeRegExp(name)), "i"
 
@@ -240,13 +260,16 @@ RocketChat.models.Rooms = new class extends RocketChat.models._Base
 
 		return @update query, update
 
-	addUsernameById: (_id, username) ->
+	addUsernameById: (_id, username, muted) ->
 		query =
 			_id: _id
 
 		update =
 			$addToSet:
 				usernames: username
+
+		if muted
+			update.$addToSet.muted = username
 
 		return @update query, update
 
@@ -293,7 +316,8 @@ RocketChat.models.Rooms = new class extends RocketChat.models._Base
 		return @update query, update
 
 	removeUsernameFromAll: (username) ->
-		query = {}
+		query =
+			usernames: username
 
 		update =
 			$pull:
@@ -362,6 +386,24 @@ RocketChat.models.Rooms = new class extends RocketChat.models._Base
 				"u.username": username
 
 		return @update query, update, { multi: true }
+
+	setJoinCodeById: (_id, joinCode) ->
+		query =
+			_id: _id
+
+		if joinCode?.trim() isnt ''
+			update =
+				$set:
+					joinCodeRequired: true
+					joinCode: joinCode
+		else
+			update =
+				$set:
+					joinCodeRequired: false
+				$unset:
+					joinCode: 1
+
+		return @update query, update
 
 	setUserById: (_id, user) ->
 		query =

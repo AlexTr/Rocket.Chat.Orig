@@ -19,8 +19,11 @@ Meteor.startup(function() {
 		];
 
 		this.add('LDAP_Enable', false, { type: 'boolean', public: true });
+		this.add('LDAP_Login_Fallback', true, { type: 'boolean', enableQuery: enableQuery });
 		this.add('LDAP_Host', '', { type: 'string', enableQuery: enableQuery });
 		this.add('LDAP_Port', '389', { type: 'string', enableQuery: enableQuery });
+		this.add('LDAP_Connect_Timeout', 600000, {type: 'int', enableQuery: enableQuery});
+		this.add('LDAP_Idle_Timeout', 600000, {type: 'int', enableQuery: enableQuery});
 		this.add('LDAP_Encryption', 'plain', { type: 'select', values: [ { key: 'plain', i18nLabel: 'No_Encryption' }, { key: 'tls', i18nLabel: 'StartTLS' }, { key: 'ssl', i18nLabel: 'SSL/LDAPS' } ], enableQuery: enableQuery });
 		this.add('LDAP_CA_Cert', '', { type: 'string', multiline: true, enableQuery: enableTLSQuery });
 		this.add('LDAP_Reject_Unauthorized', true, { type: 'boolean', enableQuery: enableTLSQuery });
@@ -39,6 +42,8 @@ Meteor.startup(function() {
 		this.add('LDAP_Sync_User_Avatar', true, { type: 'boolean', enableQuery: syncDataQuery });
 		this.add('LDAP_Sync_User_Data_FieldMap', '{"cn":"name", "mail":"email"}', { type: 'string', enableQuery: syncDataQuery });
 		this.add('LDAP_Default_Domain', '', { type: 'string', enableQuery: enableQuery });
+		this.add('LDAP_Merge_Existing_Users', false, { type: 'boolean', enableQuery: enableQuery });
+		this.add('LDAP_Import_Users', false, { type: 'boolean', enableQuery: syncDataQuery });
 		this.add('LDAP_Test_Connection', 'ldap_test_connection', { type: 'action', actionText: 'Test_Connection' });
 		this.add('LDAP_Sync_Users', 'ldap_sync_users', { type: 'action', actionText: 'Sync_Users' });
 	});
