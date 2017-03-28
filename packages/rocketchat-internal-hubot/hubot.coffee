@@ -154,7 +154,7 @@ class HubotScripts
 		for modulePath in modulesToLoad
 			try
 				Npm.require(modulePath)(robot)
-				robot.parseHelp __meteor_bootstrap__.serverDir+'/npm/rocketchat_internal-hubot/node_modules/'+modulePath
+				robot.parseHelp __meteor_bootstrap__.serverDir+'/npm/node_modules/meteor/rocketchat_internal-hubot/node_modules/'+modulePath
 				console.log "Loaded #{modulePath}".green
 			catch e
 				console.log "can't load #{modulePath}".red
@@ -188,17 +188,18 @@ sendHelper = Meteor.bindEnvironment (robot, envelope, strings, map) ->
 
 InternalHubot = {}
 
-init = =>
-	InternalHubot = new Robot null, null, false, RocketChat.settings.get 'InternalHubot_Username'
-	InternalHubot.alias = 'bot'
-	InternalHubot.adapter = new RocketChatAdapter InternalHubot
-	HubotScripts(InternalHubot)
-	InternalHubot.run()
-
+init = _.debounce Meteor.bindEnvironment( =>
 	if RocketChat.settings.get 'InternalHubot_Enabled'
+		InternalHubot = new Robot null, null, false, RocketChat.settings.get 'InternalHubot_Username'
+		InternalHubot.alias = 'bot'
+		InternalHubot.adapter = new RocketChatAdapter InternalHubot
+		HubotScripts(InternalHubot)
+		InternalHubot.run()
 		RocketChat.callbacks.add 'afterSaveMessage', InternalHubotReceiver, RocketChat.callbacks.priority.LOW, 'InternalHubot'
 	else
+		InternalHubot = {}
 		RocketChat.callbacks.remove 'afterSaveMessage', 'InternalHubot'
+), 1000
 
 Meteor.startup ->
 	init()

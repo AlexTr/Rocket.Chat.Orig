@@ -2,6 +2,9 @@
 # KaTeX is a fast, easy-to-use JavaScript library for TeX math rendering on the web.
 # https://github.com/Khan/KaTeX
 ###
+
+katex = require('katex')
+
 class Katex
 	constructor: ->
 		@delimiters_map = [

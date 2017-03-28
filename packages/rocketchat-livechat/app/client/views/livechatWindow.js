@@ -41,6 +41,12 @@ Template.livechatWindow.helpers({
 	},
 	videoCalling() {
 		return LivechatVideoCall.isActive();
+	},
+	isOpened() {
+		return Livechat.isWidgetOpened();
+	},
+	showWidget() {
+		return Livechat.online || Livechat.displayOfflineForm;
 	}
 });
 
@@ -63,7 +69,7 @@ Template.livechatWindow.onCreated(function() {
 
 	const defaultAppLanguage = () => {
 		let lng = window.navigator.userLanguage || window.navigator.language || 'en';
-		let regexp = /([a-z]{2}-)([a-z]{2})/;
+		const regexp = /([a-z]{2}-)([a-z]{2})/;
 		if (regexp.test(lng)) {
 			lng = lng.replace(regexp, function(match, ...parts) {
 				return parts[0] + parts[1].toUpperCase();
@@ -105,6 +111,10 @@ Template.livechatWindow.onCreated(function() {
 				Livechat.room = result.room._id;
 			}
 
+			if (result.agentData) {
+				Livechat.agent = result.agentData;
+			}
+
 			TAPi18n.setLanguage((result.language || defaultAppLanguage()).split('-').shift());
 
 			Triggers.setTriggers(result.triggers);
@@ -113,6 +123,14 @@ Template.livechatWindow.onCreated(function() {
 			result.departments.forEach((department) => {
 				Department.insert(department);
 			});
+
+			Livechat.ready();
+		}
+	});
+
+	$(window).on('focus', () => {
+		if (Livechat.isWidgetOpened()) {
+			$('textarea').focus();
 		}
 	});
 });

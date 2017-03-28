@@ -8,17 +8,24 @@ logger = new Logger 'rocketchat:theme',
 			type: 'info'
 
 
+WebApp.rawConnectHandlers.use (req, res, next) ->
+	path = req.url.split("?")[0]
+	prefix = __meteor_runtime_config__.ROOT_URL_PATH_PREFIX || ''
+	if (path == "#{prefix}/__cordova/theme.css" || path == "#{prefix}/theme.css")
+		css = RocketChat.theme.getCss()
+		hash = crypto.createHash('sha1').update(css).digest('hex')
+		res.setHeader('Content-Type', 'text/css; charset=UTF-8')
+		res.setHeader('ETag', '"' + hash + '"')
+		res.write(css)
+		res.end()
+	else
+		next()
+
 calculateClientHash = WebAppHashing.calculateClientHash
 WebAppHashing.calculateClientHash = (manifest, includeFilter, runtimeConfigOverride) ->
 	css = RocketChat.theme.getCss()
 
 	if css.trim() isnt ''
-		WebAppInternals.staticFiles['/__cordova/theme.css'] = WebAppInternals.staticFiles['/theme.css'] =
-			cacheable: true
-			sourceMapUrl: undefined
-			type: 'css'
-			content: css
-
 		hash = crypto.createHash('sha1').update(css).digest('hex')
 
 		themeManifestItem = _.find manifest, (item) -> return item.path is 'app/theme.css'
@@ -36,28 +43,12 @@ WebAppHashing.calculateClientHash = (manifest, includeFilter, runtimeConfigOverr
 
 	calculateClientHash.call this, manifest, includeFilter, runtimeConfigOverride
 
-
-setctionPerType =
-	'color': 'Colors'
-	'font': 'Fonts'
-
-
 RocketChat.theme = new class
 	variables: {}
 	packageCallbacks: []
 	files: [
-		'assets/stylesheets/global/_variables.less'
-		'assets/stylesheets/utils/_keyframes.import.less'
-		'assets/stylesheets/utils/_lesshat.import.less'
-		'assets/stylesheets/utils/_preloader.import.less'
-		'assets/stylesheets/utils/_reset.import.less'
-		'assets/stylesheets/utils/_chatops.less'
-		'assets/stylesheets/animation.css'
-		'assets/stylesheets/base.less'
-		'assets/stylesheets/fontello.css'
-		'assets/stylesheets/rtl.less'
-		'assets/stylesheets/swipebox.min.css'
-		'assets/stylesheets/utils/_colors.import.less'
+		'server/lesshat.less'
+		'server/colors.less'
 	]
 
 	constructor: ->
@@ -78,7 +69,7 @@ RocketChat.theme = new class
 
 				RocketChat.settings.get '*', Meteor.bindEnvironment (key, value, initialLoad) =>
 					if key is 'theme-custom-css'
-						if value?.trim() isnt ''
+						if value?
 							@customCSS = value
 					else if /^theme-.+/.test(key) is true
 						name = key.replace /^theme-[a-z]+-/, ''
@@ -124,7 +115,7 @@ RocketChat.theme = new class
 					process.emit('message', {refresh: 'client'})
 				, 200
 
-	addVariable: (type, name, value, persist=true) ->
+	addVariable: (type, name, value, section, persist=true, editor, allowedTypes) ->
 		@variables[name] =
 			type: type
 			value: value
@@ -133,16 +124,18 @@ RocketChat.theme = new class
 			config =
 				group: 'Layout'
 				type: type
-				section: setctionPerType[type]
+				editor: editor or type
+				section: section
 				public: false
+				allowedTypes: allowedTypes
 
 			RocketChat.settings.add "theme-#{type}-#{name}", value, config
 
-	addPublicColor: (name, value) ->
-		@addVariable 'color', name, value, true
+	addPublicColor: (name, value, section, editor='color') ->
+		@addVariable 'color', name, value, section, true, editor, ['color', 'expression']
 
 	addPublicFont: (name, value) ->
-		@addVariable 'font', name, value, true
+		@addVariable 'font', name, value, 'Fonts', true
 
 	getVariablesAsObject: ->
 		obj = {}

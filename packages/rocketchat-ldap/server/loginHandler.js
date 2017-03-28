@@ -12,7 +12,7 @@ function fallbackDefaultAccountSystem(bind, username, password) {
 		}
 	}
 
-	logger.info('Fallback to default account systen', username);
+	logger.info('Fallback to default account system', username);
 
 	const loginRequest = {
 		user: username,
@@ -50,7 +50,11 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
 		}
 
 		if (ldap.authSync(users[0].dn, loginRequest.ldapPass) === true) {
-			ldapUser = users[0];
+			if (ldap.isUserInGroup (loginRequest.username)) {
+				ldapUser = users[0];
+			} else {
+				throw new Error('User not in a valid group');
+			}
 		} else {
 			logger.info('Wrong password for', loginRequest.username);
 		}
@@ -79,7 +83,7 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
 	// Look to see if user already exists
 	let userQuery;
 
-	let Unique_Identifier_Field = getLdapUserUniqueID(ldapUser);
+	const Unique_Identifier_Field = getLdapUserUniqueID(ldapUser);
 	let user;
 
 	if (Unique_Identifier_Field) {

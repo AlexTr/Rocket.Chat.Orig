@@ -29,7 +29,7 @@ const CROWD = class CROWD {
 		const AtlassianCrowd = Npm.require('atlassian-crowd');
 
 		let url = RocketChat.settings.get('CROWD_URL');
-		let urlLastChar = url.slice(-1);
+		const urlLastChar = url.slice(-1);
 
 		if (urlLastChar !== '/') {
 			url += '/';
@@ -170,10 +170,6 @@ const CROWD = class CROWD {
 			});
 		}
 
-		Meteor.runAsUser(crowdUser._id, function() {
-			Meteor.call('joinDefaultChannels');
-		});
-
 		return {
 			userId: crowdUser._id
 		};
@@ -240,7 +236,7 @@ Meteor.methods({
 			throw new Meteor.Error('crowd_disabled');
 		}
 
-		let crowd = new CROWD();
+		const crowd = new CROWD();
 
 		try {
 			crowd.checkConnection();

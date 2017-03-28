@@ -1,3 +1,4 @@
+import toastr from 'toastr'
 Template.mailMessagesInstructions.helpers
 	name: ->
 		return Meteor.user().name
@@ -112,9 +113,11 @@ Template.mailMessagesInstructions.onCreated ->
 	@selectedUsers = new ReactiveVar []
 	@erroredEmails = new ReactiveVar []
 
+	currentData = Template.currentData()
+
 	@reset = =>
 		@selectedUsers.set []
-		RocketChat.TabBar.setTemplate('channelSettings')
+		currentData.tabBar.setTemplate('channelSettings')
 		view = Blaze.getView($('.messages-box')[0])
 		view?.templateInstance?().resetSelection?(false)
 
