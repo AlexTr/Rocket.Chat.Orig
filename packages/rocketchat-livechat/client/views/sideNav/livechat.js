@@ -62,14 +62,10 @@ Template.livechat.helpers({
 		const statusLivechat = Template.instance().statusLivechat.get();
 
 		return {
-			status: statusLivechat === 'available' ? 'status-online' : 'status-offline',
+			status: statusLivechat === 'available' ? 'status-online' : '',
 			icon: statusLivechat === 'available' ? 'icon-toggle-on' : 'icon-toggle-off',
 			hint: statusLivechat === 'available' ? t('Available') : t('Not_Available')
 		};
-	},
-
-	livechatAvailable() {
-		return Template.instance().statusLivechat.get();
 	},
 
 	isLivechatAvailable() {
@@ -106,7 +102,7 @@ Template.livechat.events({
 
 		swal({
 			title: t('Livechat_Take_Confirm'),
-			text: t('Message') + ': ' + this.message,
+			text: `${ t('Message') }: ${ this.message }`,
 			showCancelButton: true,
 			confirmButtonColor: '#3085d6',
 			cancelButtonColor: '#d33',

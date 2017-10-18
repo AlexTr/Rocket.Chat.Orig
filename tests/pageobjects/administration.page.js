@@ -2,13 +2,14 @@ import Page from './Page';
 
 class Administration extends Page {
 	get flexNav() { return browser.element('.flex-nav'); }
-	get flexNavContent() { return browser.element('.flex-nav .content'); }
-	get layoutLink() { return browser.element('.flex-nav .content [href="/admin/Layout"]'); }
-	get infoLink() { return browser.element('.flex-nav .content [href="/admin/info"]'); }
-	get roomsLink() { return browser.element('.flex-nav .content [href="/admin/rooms"]'); }
-	get usersLink() { return browser.element('.flex-nav .content [href="/admin/users"]'); }
-	get generalLink() { return browser.element('.flex-nav .content [href="/admin/General"]'); }
-	get permissionsLink() { return browser.element('.flex-nav .content [href="/admin/permissions"]'); }
+	get flexNavContent() { return browser.element('.flex-nav'); }
+	get settingsSearch() { return browser.element('[name=settings-search]'); }
+	get layoutLink() { return browser.element('.flex-nav [href="/admin/Layout"]'); }
+	get infoLink() { return browser.element('.flex-nav [href="/admin/info"]'); }
+	get roomsLink() { return browser.element('.flex-nav [href="/admin/rooms"]'); }
+	get usersLink() { return browser.element('.flex-nav [href="/admin/users"]'); }
+	get generalLink() { return browser.element('.flex-nav [href="/admin/General"]'); }
+	get permissionsLink() { return browser.element('.flex-nav [href="/admin/permissions"]'); }
 	get customScriptBtn() { return browser.element('.section:nth-of-type(6) .collapse'); }
 	get customScriptLoggedOutTextArea() { return browser.element('.section:nth-of-type(6) .CodeMirror-scroll'); }
 	get customScriptLoggedInTextArea() { return browser.element('.CodeMirror.cm-s-default:nth-of-type(2)'); }
@@ -82,6 +83,8 @@ class Administration extends Page {
 	get generalFavoriteRoomTrue() { return browser.element('label:nth-of-type(1) [name="Favorite_Rooms"]'); }
 	get generalFavoriteRoomFalse() { return browser.element('label:nth-of-type(2) [name="Favorite_Rooms"]'); }
 	get generalFavoriteRoomReset() { return browser.element('.reset-setting[data-setting="Favorite_Rooms"]'); }
+	get generalOpenFirstChannel() { return browser.element('[name="First_Channel_After_Login"]'); }
+	get generalOpenFirstChannelReset() { return browser.element('.reset-setting[data-setting="First_Channel_After_Login"]'); }
 	get generalCdnPrefix() { return browser.element('[name="CDN_PREFIX"]'); }
 	get generalCdnPrefixReset() { return browser.element('.reset-setting[data-setting="CDN_PREFIX"]'); }
 	get generalForceSSLTrue() { return browser.element('label:nth-of-type(1) [name="Force_SSL"]'); }
@@ -117,7 +120,7 @@ class Administration extends Page {
 	get generalUTF8NamesSlugReset() { return browser.element('.reset-setting[data-setting="UTF8_Names_Slugify"]'); }
 
 	checkUserList(user) {
-		const element = browser.element('td=adminCreated'+user);
+		const element = browser.element(`td=adminCreated${ user }`);
 		element.waitForVisible(5000);
 		browser.pause(500);
 		const result = element.isVisible();
@@ -125,7 +128,7 @@ class Administration extends Page {
 	}
 
 	getUserFromList(user) {
-		const element = browser.element('td='+user);
+		const element = browser.element(`td=${ user }`);
 		element.waitForVisible(5000);
 		return element;
 	}

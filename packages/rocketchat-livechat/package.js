@@ -127,6 +127,7 @@ Package.onUse(function(api) {
 	api.addFiles('server/hooks/externalMessage.js', 'server');
 	api.addFiles('server/hooks/markRoomResponded.js', 'server');
 	api.addFiles('server/hooks/offlineMessage.js', 'server');
+	api.addFiles('server/hooks/RDStation.js', 'server');
 	api.addFiles('server/hooks/sendToCRM.js', 'server');
 
 	// methods
@@ -157,6 +158,7 @@ Package.onUse(function(api) {
 	api.addFiles('server/methods/sendMessageLivechat.js', 'server');
 	api.addFiles('server/methods/sendOfflineMessage.js', 'server');
 	api.addFiles('server/methods/setCustomField.js', 'server');
+	api.addFiles('server/methods/setDepartmentForVisitor.js', 'server');
 	api.addFiles('server/methods/startVideoCall.js', 'server');
 	api.addFiles('server/methods/transfer.js', 'server');
 	api.addFiles('server/methods/webhookTest.js', 'server');

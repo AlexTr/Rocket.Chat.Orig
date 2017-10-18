@@ -2,13 +2,31 @@
 class API extends Restivus {
 	constructor(properties) {
 		super(properties);
-		this.logger = new Logger(`API ${properties.version ? properties.version : 'default'} Logger`, {});
+		this.logger = new Logger(`API ${ properties.version ? properties.version : 'default' } Logger`, {});
 		this.authMethods = [];
 		this.helperMethods = new Map();
+		this.fieldSeparator = '.';
 		this.defaultFieldsToExclude = {
 			joinCode: 0,
 			$loki: 0,
-			meta: 0
+			meta: 0,
+			members: 0,
+			importIds: 0
+		};
+		this.limitedUserFieldsToExclude = {
+			avatarOrigin: 0,
+			emails: 0,
+			phone: 0,
+			statusConnection: 0,
+			createdAt: 0,
+			lastLogin: 0,
+			services: 0,
+			requirePasswordChange: 0,
+			requirePasswordChangeReason: 0,
+			roles: 0,
+			statusDefault: 0,
+			_updatedAt: 0,
+			customFields: 0
 		};
 
 		this._config.defaultOptionsEndpoint = function() {
@@ -96,15 +114,15 @@ class API extends Restivus {
 						endpoints[method] = { action: endpoints[method] };
 					}
 
-					//Add a try/catch for each much
+					//Add a try/catch for each endpoint
 					const originalAction = endpoints[method].action;
 					endpoints[method].action = function() {
-						this.logger.debug(`${this.request.method.toUpperCase()}: ${this.request.url}`);
+						this.logger.debug(`${ this.request.method.toUpperCase() }: ${ this.request.url }`);
 						let result;
 						try {
 							result = originalAction.apply(this);
 						} catch (e) {
-							this.logger.debug(`${method} ${route} threw an error:`, e);
+							this.logger.debug(`${ method } ${ route } threw an error:`, e.stack);
 							return RocketChat.API.v1.failure(e.message, e.error);
 						}
 
@@ -131,7 +149,7 @@ const getUserAuth = function _getUserAuth() {
 	const invalidResults = [undefined, null, false];
 	return {
 		token: 'services.resume.loginTokens.hashedToken',
-		user: function() {
+		user() {
 			if (this.bodyParams && this.bodyParams.payload) {
 				this.bodyParams = JSON.parse(this.bodyParams.payload);
 			}

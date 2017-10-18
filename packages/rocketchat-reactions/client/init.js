@@ -1,5 +1,5 @@
 Template.room.events({
-	'click .add-reaction'(event) {
+	'click .add-reaction, click [data-message-action="reaction-message"]'(event) {
 		event.preventDefault();
 		event.stopPropagation();
 		const data = Blaze.getData(event.currentTarget);
@@ -12,7 +12,7 @@ Template.room.events({
 		}
 
 		RocketChat.EmojiPicker.open(event.currentTarget, (emoji) => {
-			Meteor.call('setReaction', ':' + emoji + ':', data._arguments[1]._id);
+			Meteor.call('setReaction', `:${ emoji }:`, data._arguments[1]._id);
 		});
 	},
 
@@ -38,8 +38,8 @@ Template.room.events({
 Meteor.startup(function() {
 	RocketChat.MessageAction.addButton({
 		id: 'reaction-message',
-		icon: 'icon-people-plus',
-		i18nLabel: 'Reactions',
+		icon: 'add-reaction',
+		label: 'Reactions',
 		context: [
 			'message',
 			'message-mobile'
@@ -50,10 +50,10 @@ Meteor.startup(function() {
 			event.stopPropagation();
 
 			RocketChat.EmojiPicker.open(event.currentTarget, (emoji) => {
-				Meteor.call('setReaction', ':' + emoji + ':', data._arguments[1]._id);
+				Meteor.call('setReaction', `:${ emoji }:`, data._arguments[1]._id);
 			});
 		},
-		validation(message) {
+		condition(message) {
 			const room = RocketChat.models.Rooms.findOne({ _id: message.rid });
 			const user = Meteor.user();
 
@@ -67,6 +67,7 @@ Meteor.startup(function() {
 
 			return true;
 		},
-		order: 22
+		order: 22,
+		group: 'message'
 	});
 });

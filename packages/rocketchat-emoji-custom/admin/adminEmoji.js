@@ -46,7 +46,7 @@ Template.adminEmoji.onCreated(function() {
 		groups: ['emoji-custom'],
 		id: 'add-emoji',
 		i18nTitle: 'Custom_Emoji_Add',
-		icon: 'icon-plus',
+		icon: 'plus',
 		template: 'adminEmojiEdit',
 		order: 1
 	});
@@ -55,7 +55,7 @@ Template.adminEmoji.onCreated(function() {
 		groups: ['emoji-custom'],
 		id: 'admin-emoji-info',
 		i18nTitle: 'Custom_Emoji_Info',
-		icon: 'icon-cog',
+		icon: 'customize',
 		template: 'adminEmojiInfo',
 		order: 2
 	});
@@ -78,7 +78,7 @@ Template.adminEmoji.onCreated(function() {
 
 		const limit = (instance.limit != null) ? instance.limit.get() : 0;
 
-		return RocketChat.models.EmojiCustom.find(query, { limit: limit, sort: { name: 1 }}).fetch();
+		return RocketChat.models.EmojiCustom.find(query, { limit, sort: { name: 1 }}).fetch();
 	};
 });
 

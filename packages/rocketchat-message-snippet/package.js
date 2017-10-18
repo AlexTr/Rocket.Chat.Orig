@@ -8,12 +8,12 @@ Package.describe({
 
 Package.onUse(function(api) {
 	api.use([
+		'mongo',
 		'ecmascript',
 		'rocketchat:lib',
 		'rocketchat:file',
 		'rocketchat:markdown',
 		'rocketchat:theme',
-		'less',
 		'random',
 		'underscore',
 		'tracker',
@@ -49,7 +49,7 @@ Package.onUse(function(api) {
 		'client/tabBar/views/snippetMessage.html',
 		'client/tabBar/views/snippetedMessages.js',
 		'client/tabBar/views/snippetMessage.js',
-		'client/page/stylesheets/snippetPage.less'
+		'client/page/stylesheets/snippetPage.css'
 	], 'client');
 
 });

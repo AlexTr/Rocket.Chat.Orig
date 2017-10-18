@@ -11,7 +11,7 @@ Package.describe({
 });
 
 Npm.depends({
-	'clipboard': '1.5.12'
+	clipboard: '1.7.1'
 });
 
 Package.onUse(function(api) {
@@ -19,8 +19,8 @@ Package.onUse(function(api) {
 		'mongo',
 		'ecmascript',
 		'templating',
-		'coffeescript',
 		'underscore',
+		'reactive-var',
 		'rocketchat:lib',
 		'meteorhacks:inject-initial'
 	]);
@@ -29,7 +29,9 @@ Package.onUse(function(api) {
 	api.addFiles('client/loading.html', 'client');
 	api.addFiles('client/error.html', 'client');
 	api.addFiles('client/logoLayout.html', 'client');
-	api.addFiles('client/main.coffee', 'client');
+	api.addFiles('client/main.js', 'client');
 
 	api.addFiles('server/inject.js', 'server');
+	api.addAssets('public/icons.svg', 'server');
+	api.addAssets('public/loading.css', 'server');
 });

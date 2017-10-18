@@ -66,6 +66,8 @@ Meteor.methods({
 				t: 'd',
 				alert: false,
 				unread: 0,
+				userMentions: 0,
+				groupMentions: 0,
 				u: {
 					_id: me._id,
 					username: me.username
@@ -78,12 +80,12 @@ Meteor.methods({
 		}
 
 		RocketChat.models.Subscriptions.upsert({
-			rid: rid,
+			rid,
 			$and: [{'u._id': me._id}] // work around to solve problems with upsert and dot
 		}, upsertSubscription);
 
 		RocketChat.models.Subscriptions.upsert({
-			rid: rid,
+			rid,
 			$and: [{'u._id': to._id}] // work around to solve problems with upsert and dot
 		}, {
 			$setOnInsert: {
@@ -92,6 +94,8 @@ Meteor.methods({
 				open: false,
 				alert: false,
 				unread: 0,
+				userMentions: 0,
+				groupMentions: 0,
 				u: {
 					_id: to._id,
 					username: to.username
@@ -100,15 +104,13 @@ Meteor.methods({
 		});
 
 		return {
-			rid: rid
+			rid
 		};
 	}
 });
 
-DDPRateLimiter.addRule({
-	type: 'method',
-	name: 'createDirectMessage',
-	connectionId() {
-		return true;
+RocketChat.RateLimiter.limitMethod('createDirectMessage', 10, 60000, {
+	userId(userId) {
+		return !RocketChat.authz.hasPermission(userId, 'send-many-messages');
 	}
-}, 10, 60000);
+});

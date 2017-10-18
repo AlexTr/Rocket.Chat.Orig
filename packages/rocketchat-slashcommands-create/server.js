@@ -11,19 +11,20 @@ function Create(command, params, item) {
 		}
 		return result;
 	}
-	var channel, room, user;
-	var regexp = /#?([\d-_\w]+)/g;
+
+	const regexp = new RegExp(RocketChat.settings.get('UTF8_Names_Validation'));
+
 	if (command !== 'create' || !Match.test(params, String)) {
 		return;
 	}
-	channel = regexp.exec(params.trim());
-	channel = channel ? channel[1] : '';
+	let channel = regexp.exec(params.trim());
+	channel = channel ? channel[0] : '';
 	if (channel === '') {
 		return;
 	}
 
-	user = Meteor.users.findOne(Meteor.userId());
-	room = RocketChat.models.Rooms.findOneByName(channel);
+	const user = Meteor.users.findOne(Meteor.userId());
+	const room = RocketChat.models.Rooms.findOneByName(channel);
 	if (room != null) {
 		RocketChat.Notifications.notifyUser(Meteor.userId(), 'message', {
 			_id: Random.id(),

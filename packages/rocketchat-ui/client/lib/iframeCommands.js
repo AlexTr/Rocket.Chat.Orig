@@ -15,11 +15,11 @@ const commands = {
 		const customOAuthCallback = (response) => {
 			event.source.postMessage({
 				event: 'custom-oauth-callback',
-				response: response
+				response
 			}, event.origin);
 		};
 
-		const siteUrl = Meteor.settings.Site_Url + '/';
+		const siteUrl = `${ Meteor.settings.Site_Url }/`;
 		if (typeof data.redirectUrl !== 'string' || !data.redirectUrl.startsWith(siteUrl)) {
 			data.redirectUrl = null;
 		}
@@ -28,7 +28,7 @@ const commands = {
 			const customOauth = ServiceConfiguration.configurations.findOne({service: data.service});
 
 			if (customOauth) {
-				const customLoginWith = Meteor['loginWith' + _.capitalize(customOauth.service, true)];
+				const customLoginWith = Meteor[`loginWith${ _.capitalize(customOauth.service, true) }`];
 				const customRedirectUri = data.redirectUrl || siteUrl;
 				customLoginWith.call(Meteor, {'redirectUrl': customRedirectUri}, customOAuthCallback);
 			}
@@ -50,6 +50,18 @@ const commands = {
 			Meteor.call('logoutCleanUp', user);
 			return FlowRouter.go('home');
 		});
+	},
+
+	'set-toolbar-button'({ id, icon, label }) {
+		const toolbar = Session.get('toolbarButtons') || { buttons: {} };
+		toolbar.buttons[id] = { icon, label };
+		Session.set('toolbarButtons', toolbar);
+	},
+
+	'remove-toolbar-button'({ id }) {
+		const toolbar = Session.get('toolbarButtons') || { buttons: {} };
+		delete toolbar.buttons[id];
+		Session.set('toolbarButtons', toolbar);
 	}
 };
 

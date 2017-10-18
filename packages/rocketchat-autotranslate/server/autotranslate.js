@@ -15,6 +15,9 @@ class AutoTranslate {
 	}
 
 	tokenize(message) {
+		if (!message.tokens || !Array.isArray(message.tokens)) {
+			message.tokens = [];
+		}
 		message = this.tokenizeEmojis(message);
 		message = this.tokenizeCode(message);
 		message = this.tokenizeURLs(message);
@@ -23,14 +26,11 @@ class AutoTranslate {
 	}
 
 	tokenizeEmojis(message) {
-		if (!message.tokens || !Array.isArray(message.tokens)) {
-			message.tokens = [];
-		}
 		let count = message.tokens.length;
 		message.msg = message.msg.replace(/:[+\w\d]+:/g, function(match) {
-			const token = `<i class=notranslate>{${count++}}</i>`;
+			const token = `<i class=notranslate>{${ count++ }}</i>`;
 			message.tokens.push({
-				token: token,
+				token,
 				text: match
 			});
 			return token;
@@ -40,22 +40,19 @@ class AutoTranslate {
 	}
 
 	tokenizeURLs(message) {
-		if (!message.tokens || !Array.isArray(message.tokens)) {
-			message.tokens = [];
-		}
 		let count = message.tokens.length;
 
 		const schemes = RocketChat.settings.get('Markdown_SupportSchemesForLink').split(',').join('|');
 
 		// Support ![alt text](http://image url) and [text](http://link)
-		message.msg = message.msg.replace(new RegExp(`(!?\\[)([^\\]]+)(\\]\\((?:${schemes}):\\/\\/[^\\)]+\\))`, 'gm'), function(match, pre, text, post) {
-			const pretoken = `<i class=notranslate>{${count++}}</i>`;
+		message.msg = message.msg.replace(new RegExp(`(!?\\[)([^\\]]+)(\\]\\((?:${ schemes }):\\/\\/[^\\)]+\\))`, 'gm'), function(match, pre, text, post) {
+			const pretoken = `<i class=notranslate>{${ count++ }}</i>`;
 			message.tokens.push({
 				token: pretoken,
 				text: pre
 			});
 
-			const posttoken = `<i class=notranslate>{${count++}}</i>`;
+			const posttoken = `<i class=notranslate>{${ count++ }}</i>`;
 			message.tokens.push({
 				token: posttoken,
 				text: post
@@ -65,14 +62,14 @@ class AutoTranslate {
 		});
 
 		// Support <http://link|Text>
-		message.msg = message.msg.replace(new RegExp(`((?:<|&lt;)(?:${schemes}):\\/\\/[^\\|]+\\|)(.+?)(?=>|&gt;)((?:>|&gt;))`, 'gm'), function(match, pre, text, post) {
-			const pretoken = `<i class=notranslate>{${count++}}</i>`;
+		message.msg = message.msg.replace(new RegExp(`((?:<|&lt;)(?:${ schemes }):\\/\\/[^\\|]+\\|)(.+?)(?=>|&gt;)((?:>|&gt;))`, 'gm'), function(match, pre, text, post) {
+			const pretoken = `<i class=notranslate>{${ count++ }}</i>`;
 			message.tokens.push({
 				token: pretoken,
 				text: pre
 			});
 
-			const posttoken = `<i class=notranslate>{${count++}}</i>`;
+			const posttoken = `<i class=notranslate>{${ count++ }}</i>`;
 			message.tokens.push({
 				token: posttoken,
 				text: post
@@ -85,21 +82,17 @@ class AutoTranslate {
 	}
 
 	tokenizeCode(message) {
-		if (!message.tokens || !Array.isArray(message.tokens)) {
-			message.tokens = [];
-		}
 		let count = message.tokens.length;
 
 		message.html = message.msg;
-		RocketChat.MarkdownCode.handle_codeblocks(message);
-		RocketChat.MarkdownCode.handle_inlinecode(message);
+		message = RocketChat.Markdown.parseMessageNotEscaped(message);
 		message.msg = message.html;
 
 		for (const tokenIndex in message.tokens) {
 			if (message.tokens.hasOwnProperty(tokenIndex)) {
 				const token = message.tokens[tokenIndex].token;
 				if (token.indexOf('notranslate') === -1) {
-					const newToken = `<i class=notranslate>{${count++}}</i>`;
+					const newToken = `<i class=notranslate>{${ count++ }}</i>`;
 					message.msg = message.msg.replace(token, newToken);
 					message.tokens[tokenIndex].token = newToken;
 				}
@@ -110,17 +103,14 @@ class AutoTranslate {
 	}
 
 	tokenizeMentions(message) {
-		if (!message.tokens || !Array.isArray(message.tokens)) {
-			message.tokens = [];
-		}
 		let count = message.tokens.length;
 
 		if (message.mentions && message.mentions.length > 0) {
 			message.mentions.forEach(mention => {
-				message.msg = message.msg.replace(new RegExp(`(@${mention.username})`, 'gm'), match => {
-					const token = `<i class=notranslate>{${count++}}</i>`;
+				message.msg = message.msg.replace(new RegExp(`(@${ mention.username })`, 'gm'), match => {
+					const token = `<i class=notranslate>{${ count++ }}</i>`;
 					message.tokens.push({
-						token: token,
+						token,
 						text: match
 					});
 					return token;
@@ -130,10 +120,10 @@ class AutoTranslate {
 
 		if (message.channels && message.channels.length > 0) {
 			message.channels.forEach(channel => {
-				message.msg = message.msg.replace(new RegExp(`(#${channel.name})`, 'gm'), match => {
-					const token = `<i class=notranslate>{${count++}}</i>`;
+				message.msg = message.msg.replace(new RegExp(`(#${ channel.name })`, 'gm'), match => {
+					const token = `<i class=notranslate>{${ count++ }}</i>`;
 					message.tokens.push({
-						token: token,
+						token,
 						text: match
 					});
 					return token;
@@ -171,7 +161,7 @@ class AutoTranslate {
 
 					let msgs = targetMessage.msg.split('\n');
 					msgs = msgs.map(msg => encodeURIComponent(msg));
-					const query = `q=${msgs.join('&q=')}`;
+					const query = `q=${ msgs.join('&q=') }`;
 
 					const supportedLanguages = this.getSupportedLanguages('en');
 					targetLanguages.forEach(language => {
@@ -180,7 +170,7 @@ class AutoTranslate {
 						}
 						let result;
 						try {
-							result = HTTP.get('https://translation.googleapis.com/language/translate/v2', { params: { key: this.apiKey, target: language }, query: query });
+							result = HTTP.get('https://translation.googleapis.com/language/translate/v2', { params: { key: this.apiKey, target: language }, query });
 						} catch (e) {
 							console.log('Error translating message', e);
 							return message;
@@ -203,13 +193,13 @@ class AutoTranslate {
 							const attachment = message.attachments[index];
 							const translations = {};
 							if (attachment.description || attachment.text) {
-								const query = `q=${encodeURIComponent(attachment.description || attachment.text)}`;
+								const query = `q=${ encodeURIComponent(attachment.description || attachment.text) }`;
 								const supportedLanguages = this.getSupportedLanguages('en');
 								targetLanguages.forEach(language => {
 									if (language.indexOf('-') !== -1 && !_.findWhere(supportedLanguages, { language })) {
 										language = language.substr(0, 2);
 									}
-									const result = HTTP.get('https://translation.googleapis.com/language/translate/v2', { params: { key: this.apiKey, target: language }, query: query });
+									const result = HTTP.get('https://translation.googleapis.com/language/translate/v2', { params: { key: this.apiKey, target: language }, query });
 									if (result.statusCode === 200 && result.data && result.data.data && result.data.data.translations && Array.isArray(result.data.data.translations) && result.data.data.translations.length > 0) {
 										const txt = result.data.data.translations.map(translation => translation.translatedText).join('\n');
 										translations[language] = txt;
@@ -240,13 +230,13 @@ class AutoTranslate {
 			}
 
 			try {
-				result = HTTP.get('https://translation.googleapis.com/language/translate/v2/languages', { params: params });
+				result = HTTP.get('https://translation.googleapis.com/language/translate/v2/languages', { params });
 			} catch (e) {
 				if (e.response && e.response.statusCode === 400 && e.response.data && e.response.data.error && e.response.data.error.status === 'INVALID_ARGUMENT') {
 					params.target = 'en';
 					target = 'en';
 					if (!this.supportedLanguages[target]) {
-						result = HTTP.get('https://translation.googleapis.com/language/translate/v2/languages', { params: params });
+						result = HTTP.get('https://translation.googleapis.com/language/translate/v2/languages', { params });
 					}
 				}
 			} finally {

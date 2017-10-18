@@ -67,6 +67,7 @@ Meteor.startup(function() {
 	});
 
 	RocketChat.settings.add('Livechat_registration_form', true, { type: 'boolean', group: 'Livechat', public: true, i18nLabel: 'Show_preregistration_form' });
+	RocketChat.settings.add('Livechat_allow_switching_departments', true, { type: 'boolean', group: 'Livechat', public: true, i18nLabel: 'Allow_switching_departments' });
 	RocketChat.settings.add('Livechat_guest_count', 1, { type: 'int', group: 'Livechat' });
 
 	RocketChat.settings.add('Livechat_Room_Count', 1, {
@@ -233,5 +234,13 @@ Meteor.startup(function() {
 		public: true,
 		i18nLabel: 'Livechat_AllowedDomainsList',
 		i18nDescription: 'Domains_allowed_to_embed_the_livechat_widget'
+	});
+
+	RocketChat.settings.add('Livechat_RDStation_Token', '', {
+		type: 'string',
+		group: 'Livechat',
+		public: false,
+		section: 'RD Station',
+		i18nLabel: 'RDStation_Token'
 	});
 });

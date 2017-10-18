@@ -1,14 +1,14 @@
 Meteor.startup(function() {
 	RocketChat.MessageAction.addButton({
 		id: 'snippeted-message',
-		icon: 'icon-code',
-		i18nLabel: 'Snippet',
+		icon: 'code',
+		label: 'Snippet',
 		context: [
 			'snippeted',
 			'message',
 			'message-mobile'
 		],
-		action: function() {
+		action() {
 			const message = this._arguments[1];
 
 			swal({
@@ -32,12 +32,12 @@ Meteor.startup(function() {
 					if (error) {
 						return handleError(error);
 					}
-					swal('Nice!', `Snippet '${filename}' created.`, 'success');
+					swal('Nice!', `Snippet '${ filename }' created.`, 'success');
 				});
 			});
 
 		},
-		validation: function(message) {
+		condition(message) {
 			if (RocketChat.models.Subscriptions.findOne({ rid: message.rid, 'u._id': Meteor.userId() }) === undefined) {
 				return false;
 			}
@@ -48,7 +48,7 @@ Meteor.startup(function() {
 				return false;
 			}
 
-			return RocketChat.authz.hasAtLeastOnePermission('snippet-message', message.rid);
+			RocketChat.authz.hasAtLeastOnePermission('snippet-message', message.rid);
 		}
 	});
 });
